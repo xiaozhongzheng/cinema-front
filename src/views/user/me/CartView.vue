@@ -136,8 +136,8 @@ export default {
     };
   },
   created() {
-    this.getCartesByUserId();
-    this.discount = this.$store.getters.userInfo?.discount;
+  this.getCartesByUserId();
+  this.discount = useMainStore().userInfo?.discount;
 
   },
   methods: {

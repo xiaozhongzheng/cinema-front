@@ -94,6 +94,7 @@
 <script>
 import MyCenterDialog from './components/MyCenterDialog.vue';
 import SideBarItem from './components/SideBarItem.vue';
+import { useMainStore } from '@/stores/main'
 
 export default {
   components: {
@@ -116,8 +117,9 @@ export default {
   created() {
     // 初始化数据
     this.indexPath = this.$route.path;
-    this.roleId = this.$store.getters.roleId;
-    this.username = this.$store.getters.username;
+    const s = useMainStore()
+    this.roleId = s.roleId
+    this.username = s.userInfo?.username;
 
     // 初始化屏幕宽度并监听变化
     this.screenWidth = window.innerWidth;
@@ -165,16 +167,18 @@ export default {
     },
     // 退出登录
     async logout(data) {
-      await this.$store.dispatch('logout', data);
+      const s = useMainStore()
+      await s.logoutAction(data);
       this.$message.success('退出成功');
       this.$router.push("/login");
     },
     // 处理下拉菜单命令
     handleCommand(command) {
       if (command === "out") {
+        const s = useMainStore()
         this.logout({
-          roleId: this.$store.getters.roleId,
-          userId: this.$store.getters.userId
+          roleId: s.roleId,
+          userId: s.userId
         });
         return;
       }

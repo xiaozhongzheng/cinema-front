@@ -55,6 +55,7 @@
 import { pageQueryFilm, deleteFilmById } from "@/api/film";
 import AddScheduleDialog from "../schedule/components/AddScheduleDialog.vue";
 import AddFilmDialog from "./component/AddFilmDialog.vue";
+import { useMainStore } from '@/stores/main'
 export default {
   components: {
     AddScheduleDialog,
@@ -69,7 +70,7 @@ export default {
       regionArr: this.$constant.regionArr,
       dialogFormVisible: false,
       film: {},
-      roleId: this.$store.getters.roleId,
+  roleId: useMainStore().roleId,
       pageQueryApi: "",
       extraParams: {},
       tableParamsList: [

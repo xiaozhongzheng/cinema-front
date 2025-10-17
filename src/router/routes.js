@@ -1,37 +1,29 @@
-import store from '@/store'
 import { adminRoutes } from './admin';
 import { userRoutes } from './user';
 import { employeeRoutes } from './employee';
 import constant from '@/utils/global-constant'
+
 export const routes = [
   {
     path: '/',
-    redirect: constant.rolePathArr[store.getters.roleId],
+    redirect: '/user/home',
     hidden: true
-    // beforeEnter: (to, from, next) => {
-    //   if (roleId == 0) {
-    //     // 重定向到/user页面
-    //     next('/user')
-    //   } else {
-    //     // 重定向到/admin页面
-    //     next('/admin')
-    //   }
-    // },
   },
   {
     path: '/login',
     name: 'login',
     hidden: true,
-    component: () => import('../views/login'),
+    component: () => import('@/views/login/index.vue'),
   },
   {
     path: '/register',
     name: 'register',
     hidden: true,
-    component: () => import('../views/user/register')
+    component: () => import('@/views/user/register/index.vue')
   },
   {
     path: '/404',
+    name: '404',
     hidden: true,
     component: () => import('@/views/404/404View.vue')
   },
@@ -39,9 +31,9 @@ export const routes = [
   employeeRoutes,
   userRoutes,
   {
-    path: '*',
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
     redirect: '/404',
     hidden: true
   }
-
 ]

@@ -1,7 +1,7 @@
 import axios from 'axios'
-import { Message } from 'element-ui'
+import { ElMessage } from 'element-plus'
 import router from '@/router'
-import store from '@/store'
+import { useMainStore } from '@/stores/main'
 import { debounce } from './optimization'
 // 创建并初始化axios实例
 const service = axios.create({
@@ -11,7 +11,8 @@ const service = axios.create({
 
 // 请求拦截器
 service.interceptors.request.use((config) => {
-  const token = store.getters.token || '';
+  const s = useMainStore()
+  const token = s.token || '';
   // 将token放在请求头中
   if (token) {
     config.headers.Authorization = token
@@ -32,7 +33,7 @@ service.interceptors.response.use((res) => {
 
   } else {
     // 登录失败，提示错误信息
-    Message({
+    ElMessage({
       type: 'error',
       message: message
     })
@@ -46,10 +47,10 @@ service.interceptors.response.use((res) => {
   if (status === 401) {
     // 表示token过期了,清空用户信息并跳转到登录页面
     const data = {
-      roleId: store.getters.roleId,
-      userId: store.getters.userId
+      roleId: s.roleId,
+      userId: s.userId
     }
-    await store.dispatch('logout',data)
+    await s.logoutAction(data)
     msg = '登录过期了，请重新登录'
     router.push("/login");
 
@@ -58,7 +59,7 @@ service.interceptors.response.use((res) => {
   }else if (status>=400){
     msg = '客户端请求有误'
   }
-  Message({
+  ElMessage({
     type: 'error',
     message: msg
   })

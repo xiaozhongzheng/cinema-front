@@ -12,65 +12,36 @@
     </div>
 
     <div class="box">
-      <template v-for="item in handleFilmArr">
-        <FilmItem :item="item" :key="item.id"></FilmItem>
+      <template v-for="item in handleFilmArr" :key="item.id">
+        <FilmItem :item="item" />
       </template>
-
     </div>
-    <!-- <el-row :gutter="10" style="background: pink">
-      <el-col
-        :span="6"
-        v-for="item in filmArr.slice(0,4)"
-        :key="item.id"
-      >
-      <img
-          :src="item.image"
-          width="100%"
-          height="246"
-          @click="toShowFilmDetail(item.id)"
-        >
-        <div
-          class="buyBtn"
-          @click="toBuyFilm(item.id)"
-        >购票</div>
-    </el-col>
-
-    </el-row> -->
   </div>
 </template>
 
 
-<script>
+<script setup lang="ts">
+import { computed } from 'vue';
+import { useRouter } from 'vue-router';
 import FilmItem from '@/views/user/components/FilmItem.vue';
-export default {
-  components: {
-    FilmItem
-  },
-  data() {
-    return {};
-  },
-  props: {
-    filmArr: {
-      type: Array,
-      default: [],
-    },
-    status: {
-      type: Number,
-      default: 0,
-    },
-  },
-  computed: {
-    handleFilmArr() {
-      return this.filmArr.slice(0, 8)
-    }
-  },
-  methods: {
-    toShowAllFilm() {
-      this.$router.push({
-        name: "movies",
-      });
-    },
-  },
+
+// 定义 props
+const props = defineProps<{
+  filmArr: any[];  // 实际项目中建议定义具体的电影数据类型接口
+  status: number;
+}>();
+
+// 计算属性 - 只显示前8条数据
+const handleFilmArr = computed(() => {
+  return props.filmArr.slice(0, 8);
+});
+
+// 路由跳转
+const router = useRouter();
+const toShowAllFilm = () => {
+  router.push({
+    name: "movies",
+  });
 };
 </script>
 
@@ -96,7 +67,6 @@ export default {
     grid-template-columns: repeat(4, 1fr);
     gap: 20px;
   }
-
 }
 
 .lightgreen-box {
@@ -109,3 +79,4 @@ export default {
   height: 24px;
 }
 </style>
+    
