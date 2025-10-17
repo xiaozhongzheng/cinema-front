@@ -1,6 +1,6 @@
 <template>
   <div id="tableTemplate">
-    <div style="text-align: left;">
+    <div style="text-align: left">
       <el-form
         ref="searchFormRef"
         v-if="showSearchForm"
@@ -9,10 +9,7 @@
         size="small"
       >
         <tamplate v-for="(item, index) in searchParamsList">
-          <el-form-item
-            :label="item.label"
-            :prop="item.prop"
-          >
+          <el-form-item :label="item.label" :prop="item.prop">
             <template v-if="item.type === 'input'">
               <el-input
                 v-model="searchForm[item.prop]"
@@ -35,7 +32,7 @@
                 :prop="item.prop"
               >
                 <el-option
-                  v-for="(option,index) in item.options"
+                  v-for="(option, index) in item.options"
                   :key="index"
                   :label="option.label"
                   :value="option.value"
@@ -70,72 +67,37 @@
               ></slot>
             </template>
           </el-form-item>
-
         </tamplate>
 
-        <el-button
-          type="info"
-          @click="pageQueryData"
-          style="margin-left: 20px"
-        >查询</el-button>
-        <el-button
-          type="info"
-          @click="reset"
-          style="margin-left: 20px"
-        >重置</el-button>
+        <el-button type="info" @click="pageQueryData" style="margin-left: 20px"
+          >查询</el-button
+        >
+        <el-button type="info" @click="reset" style="margin-left: 20px">重置</el-button>
         <!-- 具名插槽，用于插入新增等功能的按钮 -->
         <slot name="handle"></slot>
       </el-form>
     </div>
     <el-table :data="resultList">
       <template v-for="item in tableParamsList">
-        <el-table-column
-          v-if="item.text"
-          :label="item.label"
-          :prop="item.prop"
-        >
+        <el-table-column v-if="item.text" :label="item.label" :prop="item.prop">
           <template slot-scope="scope">
             {{ item.text[scope.row[item.prop]] }}
           </template>
         </el-table-column>
-        <el-table-column
-          v-else-if="item.isImage"
-          :label="item.label"
-          :prop="item.prop"
-        >
+        <el-table-column v-else-if="item.isImage" :label="item.label" :prop="item.prop">
           <template slot-scope="scope">
-            <img
-              :src="scope.row.image"
-              height="120px"
-            >
+            <img :src="scope.row.image" height="120px" />
           </template>
         </el-table-column>
-        <el-table-column
-          v-else
-          :label="item.label"
-          :prop="item.prop"
-        >
-        </el-table-column>
+        <el-table-column v-else :label="item.label" :prop="item.prop"> </el-table-column>
       </template>
 
-      <el-table-column
-        label="操作"
-        width="300"
-      >
-
-        <template
-          slot-scope="scope"
-          v-if="scope.row.username!='admin'"
-        >
+      <el-table-column label="操作" width="300">
+        <template slot-scope="scope" v-if="scope.row.username != 'admin'">
           <!-- 采用作用域插槽，存放查看，修改，删除等功能的按钮 -->
-          <slot
-            name="columnHandle"
-            :row="scope.row"
-            :index="scope.$index"
-          ></slot>
+          <slot name="columnHandle" :row="scope.row" :index="scope.$index"></slot>
         </template>
       </el-table-column>
-
     </el-table>
     <Pager
       :pageNo="pageParams.pager.pageNo"
@@ -148,7 +110,7 @@
 </template>
 
 <script>
-import { debounce } from "@/utils/optimization";
+import { debounce } from "lodash-es";
 export default {
   name: "SearchTableTemplate",
   components: {
@@ -207,16 +169,16 @@ export default {
     //   this.resultList = res.records;
     //   this.pageParams.total = res.total;
     // },
-    pageQueryData: debounce(function(){
+    pageQueryData: debounce(function () {
       this.tableListApi({
         ...this.extraParams,
         ...this.pageParams.pager,
         ...this.searchForm,
-      }).then(res => {
+      }).then((res) => {
         this.resultList = res.records;
         this.pageParams.total = res.total;
-      })
-    },300),
+      });
+    }, 300),
 
     handleSizeChange(val) {
       this.pageParams.pager.pageSize = val;

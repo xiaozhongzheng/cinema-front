@@ -3,22 +3,38 @@
     <header>
       <div class="nav">
         <span class="label">类型：</span>
-        <span class="commonStyle" :class="{ selecting: activeType < 0 }" @click="selectTypeAll">全部</span>
+        <span
+          class="commonStyle"
+          :class="{ selecting: activeType < 0 }"
+          @click="selectTypeAll"
+          >全部</span
+        >
         <template v-for="(item, index) in typeArr">
-          <span :key="item" class="commonStyle" :class="{ selecting: activeType === index }"
-            @click="updateTypeColor(index)">
+          <span
+            :key="item"
+            class="commonStyle"
+            :class="{ selecting: activeType === index }"
+            @click="updateTypeColor(index)"
+          >
             {{ item }}
           </span>
-
         </template>
-
       </div>
       <div class="nav">
         <span class="label">地区：</span>
-        <span class="commonStyle" :class="{ selecting: activeRegion < 0 }" @click="selectRegionAll">全部</span>
+        <span
+          class="commonStyle"
+          :class="{ selecting: activeRegion < 0 }"
+          @click="selectRegionAll"
+          >全部</span
+        >
         <template v-for="(item, index) in regionArr">
-          <span :key="item" class="commonStyle" :class="{ selecting: activeRegion === index }"
-            @click="updateRegionColor(index)">
+          <span
+            :key="item"
+            class="commonStyle"
+            :class="{ selecting: activeRegion === index }"
+            @click="updateRegionColor(index)"
+          >
             {{ item }}
           </span>
         </template>
@@ -32,12 +48,16 @@
         </template>
       </div>
       <div class="page">
-        <Pager :pageNo="pageNo" :pageSize="pageSize" :total="total" :pageSizes="[18]"
-          @changePageNo="handleCurrentChange">
+        <Pager
+          :pageNo="pageNo"
+          :pageSize="pageSize"
+          :total="total"
+          :pageSizes="[18]"
+          @changePageNo="handleCurrentChange"
+        >
         </Pager>
       </div>
     </div>
-
 
     <div v-else>
       <el-empty :image-size="400" description="这里空空如也"></el-empty>
@@ -47,20 +67,20 @@
 
 <script>
 import { pageQueryFilm } from "@/api/film";
-import { throttle } from '@/utils/optimization'
+import { throttle } from "lodash-es";
 import FilmItem from "../components/FilmItem.vue";
 import Pager from "@/components/Pager.vue";
 export default {
   name: "MoviesView",
   components: {
     FilmItem,
-    Pager
+    Pager,
   },
   props: {
     titleName: {
       type: String,
-      default: ''
-    }
+      default: "",
+    },
   },
   data() {
     return {
@@ -85,32 +105,32 @@ export default {
         // },
       ],
       activeType: -1,
-      activeRegion: -1
+      activeRegion: -1,
     };
   },
   created() {
     // this.init();
     this.pageQueryFilmList();
     // 使用节流的方法在每隔1秒发一次查询影片的请求
-    this.throttlePageQueryFilm = throttle(this.pageQueryFilmList, 1000)
+    this.throttlePageQueryFilm = throttle(this.pageQueryFilmList, 1000);
   },
   watch: {
     titleName() {
-      this.throttlePageQueryFilm()
+      this.throttlePageQueryFilm();
     },
     $route(to, from) {
-      if (to.path !== '/user/movies') {
-        this.filmArr = []
+      if (to.path !== "/user/movies") {
+        this.filmArr = [];
       }
-    }
+    },
   },
   methods: {
     async pageQueryFilmList() {
       const res = await pageQueryFilm({
         pageNo: this.pageNo,
         pageSize: this.pageSize,
-        type: this.activeType < 0 ? '' : this.activeType,
-        region: this.activeRegion < 0 ? '' : this.activeRegion,
+        type: this.activeType < 0 ? "" : this.activeType,
+        region: this.activeRegion < 0 ? "" : this.activeRegion,
         title: this.titleName,
       });
       this.filmArr = res.records;
@@ -118,7 +138,7 @@ export default {
     },
 
     updateTypeColor(index) {
-      this.activeType = index
+      this.activeType = index;
       this.pageQueryFilmList();
     },
     selectTypeAll() {
@@ -142,7 +162,6 @@ export default {
 };
 </script>
 
-
 <style scoped lang="scss">
 ul li {
   list-style: none;
@@ -157,7 +176,7 @@ ul li {
   /* box-sizing: border-box; */
   padding: 20px;
 
-  &>header {
+  & > header {
     width: 100%;
     height: 100px;
     padding: 0;
@@ -170,7 +189,6 @@ ul li {
       height: 50%;
       display: flex;
       gap: 20px;
-
     }
 
     .selecting {
@@ -188,7 +206,6 @@ ul li {
         cursor: pointer;
       }
     }
-
   }
 
   .showFilm {
@@ -202,6 +219,5 @@ ul li {
   .page {
     margin: auto;
   }
-
 }
 </style>

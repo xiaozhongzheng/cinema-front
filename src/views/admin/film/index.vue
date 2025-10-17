@@ -55,7 +55,7 @@
 import { pageQueryFilm, deleteFilmById } from "@/api/film";
 import AddScheduleDialog from "../schedule/components/AddScheduleDialog.vue";
 import AddFilmDialog from "./component/AddFilmDialog.vue";
-import { useMainStore } from '@/stores/main'
+import { useMainStore } from '@/stores'
 export default {
   components: {
     AddScheduleDialog,

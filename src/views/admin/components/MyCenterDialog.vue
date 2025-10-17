@@ -96,7 +96,7 @@
 <script>
 import { updateEmployeeById } from "@/api/employee";
 import { updatePassword } from "@/api/common";
-import { useMainStore } from '@/stores/main'
+import { useMainStore } from '@/stores'
 export default {
   name: "",
   props: {

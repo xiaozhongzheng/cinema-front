@@ -203,7 +203,7 @@
 
 <script>
 import * as screen from "@/api/screen";
-import { useMainStore } from '@/stores/main'
+import { useMainStore } from '@/stores'
 export default {
   data() {
     let validateValue = (rule, value, callback) => {

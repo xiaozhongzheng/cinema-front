@@ -40,7 +40,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, defineEmits } from "vue";
-import { useMainStore } from '@/';
+import { useMainStore } from "@/stores";
 import { ElMessage } from "element-plus";
 
 const emit = defineEmits<{
@@ -74,7 +74,7 @@ const handleLogin = async () => {
   if (!formRef.value) return;
   const valid = await formRef.value.validate();
   if (valid) {
-  await store.loginAction({ ...userForm });
+    await store.loginAction({ ...userForm });
     ElMessage.success("登录成功");
     emit("handleClose");
   }
@@ -94,8 +94,6 @@ const handleLogin = async () => {
     .el-form-item__label {
       font-weight: 500;
     }
-
-   
   }
   .button-group {
     display: flex;

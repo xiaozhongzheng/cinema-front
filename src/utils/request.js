@@ -1,8 +1,7 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import router from '@/router'
-import { useMainStore } from '@/stores/main'
-import { debounce } from './optimization'
+import { useMainStore } from '@/stores'
 // 创建并初始化axios实例
 const service = axios.create({
   baseURL: '/api', // 基础地址

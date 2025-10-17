@@ -1,13 +1,19 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
+    "target": "ES2022",
+    "module": "ESNext",
     "useDefineForClassFields": true,
+    "types": [
+      "vue",
+      "vue-router",
+      "pinia",
+      "@types/node"
+    ],
     "lib": [
       "ES2020",
       "DOM",
       "DOM.Iterable"
     ],
-    "module": "ESNext",
     "skipLibCheck": true,
     /* 路径映射配置 - 提供类型提示 */
     "baseUrl": ".",

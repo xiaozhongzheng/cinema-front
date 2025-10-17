@@ -94,7 +94,7 @@
 <script>
 import MyCenterDialog from './components/MyCenterDialog.vue';
 import SideBarItem from './components/SideBarItem.vue';
-import { useMainStore } from '@/stores/main'
+import { useMainStore } from '@/stores'
 
 export default {
   components: {

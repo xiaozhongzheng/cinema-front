@@ -145,7 +145,7 @@
 import { getUserById, updateUserById } from "@/api/user";
 import { updatePassword } from "@/api/common";
 import UploadImage from "@/components/UploadImage.vue";
-import { useMainStore } from '@/stores/main'
+import { useMainStore } from '@/stores'
 export default {
   components: { UploadImage },
   data() {

@@ -7,7 +7,7 @@
 </template>
 
 <script>
-import { useMainStore } from '@/stores/main'
+import { useMainStore } from '@/stores'
 export default{
   methods: {
     toHome(){
