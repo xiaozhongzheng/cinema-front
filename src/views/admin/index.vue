@@ -94,7 +94,7 @@
 <script>
 import MyCenterDialog from './components/MyCenterDialog.vue';
 import SideBarItem from './components/SideBarItem.vue';
-import { useMainStore } from '@/stores'
+import { useUserStore } from '@/stores'
 
 export default {
   components: {
@@ -117,7 +117,7 @@ export default {
   created() {
     // 初始化数据
     this.indexPath = this.$route.path;
-    const s = useMainStore()
+    const s = useUserStore()
     this.roleId = s.roleId
     this.username = s.userInfo?.username;
 
@@ -167,7 +167,7 @@ export default {
     },
     // 退出登录
     async logout(data) {
-      const s = useMainStore()
+      const s = useUserStore()
       await s.logoutAction(data);
       this.$message.success('退出成功');
       this.$router.push("/login");
@@ -175,7 +175,7 @@ export default {
     // 处理下拉菜单命令
     handleCommand(command) {
       if (command === "out") {
-        const s = useMainStore()
+        const s = useUserStore()
         this.logout({
           roleId: s.roleId,
           userId: s.userId

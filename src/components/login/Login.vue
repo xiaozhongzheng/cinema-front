@@ -40,7 +40,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, defineEmits } from "vue";
-import { useMainStore } from "@/stores";
+import { useUserStore } from "@/stores";
 import { ElMessage } from "element-plus";
 
 const emit = defineEmits<{
@@ -50,7 +50,7 @@ const handleClose = () => {
   emit("handleClose");
 };
 
-const store = useMainStore();
+const store = useUserStore();
 const formRef = ref();
 // 响应式数据
 const userForm = reactive({

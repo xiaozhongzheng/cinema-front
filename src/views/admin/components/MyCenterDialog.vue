@@ -96,7 +96,7 @@
 <script>
 import { updateEmployeeById } from "@/api/employee";
 import { updatePassword } from "@/api/common";
-import { useMainStore } from '@/stores'
+import { useUserStore } from '@/stores'
 export default {
   name: "",
   props: {
@@ -156,7 +156,7 @@ export default {
   },
   created() {
   // this.id = localStorage.getItem("id");
-  this.employee = useMainStore().userInfo;
+  this.employee = useUserStore().userInfo;
 
   },
   mounted() {
@@ -193,7 +193,7 @@ export default {
     updateEmployeePassword(formName) {
       this.$refs[formName].validate(async (valid) => {
         if (valid) {
-          const roleId = useMainStore().roleId;
+          const roleId = useUserStore().roleId;
           this.pwdForm = { ...this.pwdForm, roleId };
           await updatePassword(this.pwdForm);
           this.$message.success("密码修改成功");

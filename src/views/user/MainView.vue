@@ -102,7 +102,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { useMainStore } from "@/stores";
+import { useUserStore } from "@/stores";
 import { recharge as rechargeApi } from "@/api/user";
 import logo from "@/assets/images/logo.png";
 import { ElMessage } from "element-plus";
@@ -111,7 +111,7 @@ import LoginDialog from "@/components/login";
 // 路由和状态管理
 const route = useRoute();
 const router = useRouter();
-const store = useMainStore();
+const store = useUserStore();
 
 // 响应式变量
 

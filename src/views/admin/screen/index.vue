@@ -203,7 +203,7 @@
 
 <script>
 import * as screen from "@/api/screen";
-import { useMainStore } from '@/stores'
+import { useUserStore } from '@/stores'
 export default {
   data() {
     let validateValue = (rule, value, callback) => {
@@ -243,7 +243,7 @@ export default {
       total: 0,
       handleType: "add", // 用于区分添加操作和修改操作
       title: "",
-  roleId: useMainStore().roleId,
+  roleId: useUserStore().roleId,
     };
   },
   created() {

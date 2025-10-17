@@ -7,11 +7,11 @@
 </template>
 
 <script>
-import { useMainStore } from '@/stores'
+import { useUserStore } from '@/stores'
 export default{
   methods: {
     toHome(){
-      const s = useMainStore()
+      const s = useUserStore()
       s.roleId === 0 ? this.$router.push('/user') : this.$router.push('/admin')
     }
   }

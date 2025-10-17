@@ -10,13 +10,13 @@ const persistConfig: PersistenceOptions = {
 
 type UserInfo = Record<string, any>
 
-interface MainState {
+interface UserState {
   token: string | null
   userInfo: UserInfo
 }
 
-export const useMainStore = defineStore('local_user_info', {
-  state: (): MainState => ({
+export const useUserStore = defineStore('local_user_info', {
+  state: (): UserState => ({
     token: null,
     userInfo: {}
   }),

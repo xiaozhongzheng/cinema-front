@@ -41,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive,defineEmits } from "vue";
+import { ref, reactive, defineEmits } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { register } from "@/api/user";
@@ -64,7 +64,7 @@ const registerForm = reactive({
 });
 
 // 验证规则
-const validatePass = (_rule:any, value:string, callback: (val?: any) => void) => {
+const validatePass = (_rule: any, value: string, callback: (val?: any) => void) => {
   if (value === "") {
     callback(new Error("请输入密码"));
   } else {
@@ -75,7 +75,7 @@ const validatePass = (_rule:any, value:string, callback: (val?: any) => void) =>
   }
 };
 
-const validatePass2 = (_rule:any, value:string, callback: (val?: any) => void) => {
+const validatePass2 = (_rule: any, value: string, callback: (val?: any) => void) => {
   if (value === "") {
     callback(new Error("请再次输入密码"));
   } else if (value !== registerForm.password) {
@@ -129,8 +129,6 @@ const toLogin = () => {
     .el-form-item__label {
       font-weight: 500;
     }
-
-   
   }
 }
 

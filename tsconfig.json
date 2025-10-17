@@ -3,14 +3,15 @@
     "target": "ES2022",
     "module": "ESNext",
     "useDefineForClassFields": true,
+    "typeRoots": ["./node_modules/@types"], // 确保包含此配置
     "types": [
       "vue",
       "vue-router",
       "pinia",
-      "@types/node"
+      "@types/node",
     ],
     "lib": [
-      "ES2020",
+      "ES2022",
       "DOM",
       "DOM.Iterable"
     ],

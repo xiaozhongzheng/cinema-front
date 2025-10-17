@@ -145,7 +145,7 @@
 import { getUserById, updateUserById } from "@/api/user";
 import { updatePassword } from "@/api/common";
 import UploadImage from "@/components/UploadImage.vue";
-import { useMainStore } from '@/stores'
+import { useUserStore } from '@/stores'
 export default {
   components: { UploadImage },
   data() {
@@ -190,7 +190,7 @@ export default {
   created() {
     // this.userId = localStorage.getItem("id");
     // this.getSingleUser(); // 获取用户的基本信息
-  const s = useMainStore()
+  const s = useUserStore()
   this.userId = s.userId
   this.userForm = s.userInfo
   },
@@ -221,7 +221,7 @@ export default {
     updateEmployeePassword(formName) {
       this.$refs[formName].validate(async (valid) => {
         if (valid) {
-          this.pwdForm.roleId = useMainStore().roleId;
+          this.pwdForm.roleId = useUserStore().roleId;
           await updatePassword(this.pwdForm);
           this.$message.success("密码修改成功");
           this.dialogPasswordVisible = false;

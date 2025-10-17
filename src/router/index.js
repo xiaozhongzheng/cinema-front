@@ -1,6 +1,6 @@
 
 import { createRouter, createWebHistory } from 'vue-router'
-import { useMainStore } from '@/stores'
+import { useUserStore } from '@/stores'
 import { routes } from './routes';
 
 const router = createRouter({
@@ -11,7 +11,7 @@ const router = createRouter({
 // const whiteList = ['/login','/404','/register','/test']
 // router.beforeEach(async (to, from, next) => {
 // router.beforeEach(async (to, from, next) => {
-//   const s = useMainStore()
+//   const s = useUserStore()
 //   const token = s.token
 //   const roleId = s.roleId
 //   await s.getUserInfoByRoleId(s.roleId)

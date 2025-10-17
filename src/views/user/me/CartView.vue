@@ -137,7 +137,7 @@ export default {
   },
   created() {
   this.getCartesByUserId();
-  this.discount = useMainStore().userInfo?.discount;
+  this.discount = useUserStore().userInfo?.discount;
 
   },
   methods: {
