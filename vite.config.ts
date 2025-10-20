@@ -14,18 +14,17 @@ export default defineConfig({
         port: 8088,
         host: true,
         watch: {
-            // use polling to ensure file change events are detected in WSL/remote mounts
             usePolling: true,
             interval: 100
         },
         hmr: {
             protocol: 'ws',
-            // explicit host so HMR websocket connects correctly from Windows browser to WSL server
             host: 'localhost'
         },
         proxy: {
             '/api': {
-                target: 'http://106.52.252.158:8080',
+                // target: 'http://106.52.252.158:8080', // 上线环境
+                target: 'http://localhost:8080', // 本地环境
                 changeOrigin: true,
                 rewrite: (path) => path.replace(/^\/api/, '')  // 修正：参数名避免使用单个字母
             }

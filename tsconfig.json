@@ -3,44 +3,31 @@
     "target": "ES2022",
     "module": "ESNext",
     "useDefineForClassFields": true,
-    "typeRoots": ["./node_modules/@types"], // 确保包含此配置
-    "types": [
-      "vue",
-      "vue-router",
-      "pinia",
-      "@types/node",
-    ],
-    "lib": [
-      "ES2022",
-      "DOM",
-      "DOM.Iterable"
-    ],
+    "typeRoots": ["node_modules/@types"],
+    "types": ["node"],  // 仅保留 node 类型
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
-    /* 路径映射配置 - 提供类型提示 */
     "baseUrl": ".",
-    "paths": {
-      "@/*": [
-        "src/*"
-      ]
-    },
-    /* Bundler mode */
+    "paths": { "@/*": ["src/*"] },
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
-    "allowJs": true,
+    "allowJs": false,  // 纯 TS 项目建议关闭
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "preserve",
-    /* Linting */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
+  "vueCompilerOptions": {  // 新增：处理 Vue SFC 类型
+    "target": 3.5
+  },
   "include": [
     "src/**/*.ts",
     "src/**/*.d.ts",
-    "src/**/*.tsx",
-    "src/**/*.vue"
-  ],
+    "src/**/*.vue",
+    "vite.config.ts"  // 补充根目录配置文件（若有）
+  ]
 }

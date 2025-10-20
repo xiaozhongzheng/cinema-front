@@ -20,8 +20,6 @@ export const useUserStore = defineStore('local_user_info', {
     token: null,
     userInfo: {}
   }),
-  // 启用 Pinia 持久化插件，直接关联配置
-  persist: true,
   getters: {
     tokenState: (state) => state.token,
     username: (state) => state.userInfo?.username,
@@ -41,8 +39,9 @@ export const useUserStore = defineStore('local_user_info', {
     },
     async loginAction(data: any) {
       const res: any = await login(data)
-      const { user , token } = res
+      const { user, token } = res
       this.setToken(token)
+      this.setUserInfo(user)
       return res
     },
     async getUserInfoByRoleId(roleId: number) {
@@ -54,5 +53,7 @@ export const useUserStore = defineStore('local_user_info', {
       await logout(data)
       this.clearData()
     }
-  }
+  },
+  // 启用 Pinia 持久化插件，直接关联配置
+  persist: true,
 })

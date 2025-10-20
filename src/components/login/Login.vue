@@ -27,8 +27,7 @@
     <el-form-item label="身份">
       <el-radio-group v-model="userForm.roleId">
         <el-radio :label="0">用户</el-radio>
-        <el-radio :label="1">员工</el-radio>
-        <el-radio :label="2">管理员</el-radio>
+        <el-radio :label="1">管理员</el-radio>
       </el-radio-group>
     </el-form-item>
   </el-form>
@@ -54,8 +53,8 @@ const store = useUserStore();
 const formRef = ref();
 // 响应式数据
 const userForm = reactive({
-  username: "",
-  password: "",
+  username: "xzzz",
+  password: "123",
   roleId: 0,
 });
 

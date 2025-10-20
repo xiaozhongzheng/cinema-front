@@ -101,7 +101,7 @@
 
 <script>
 import { getScreenRoomList } from "@/api/screen";
-import { addSchedule, updateSchedule } from "@/api/schedule.js";
+import { addSchedule, updateSchedule } from "@/api/schedule";
 
 export default {
   props: {
