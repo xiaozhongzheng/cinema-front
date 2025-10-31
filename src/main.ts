@@ -5,7 +5,7 @@ import { createPinia } from 'pinia'
 import 'element-plus/dist/index.css'
 import * as echarts from 'echarts'
 import axios from 'axios'
-import globalConstant from '@/utils/global-constant'
+// import globalConstant from '@/utils/cons'
 import SearchTableTemplate from "@/components/SearchTableTemplate.vue";
 import '@/utils/rem.js'
 import elementPlus from 'element-plus'

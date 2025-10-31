@@ -2,32 +2,21 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
-    "useDefineForClassFields": true,
-    "typeRoots": ["node_modules/@types"],
-    "types": ["node"],  // 仅保留 node 类型
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "skipLibCheck": true,
+    "lib": ["ES2022", "DOM"],
     "baseUrl": ".",
     "paths": { "@/*": ["src/*"] },
     "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "allowJs": false,  // 纯 TS 项目建议关闭
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "preserve",
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "strict": true
   },
-  "vueCompilerOptions": {  // 新增：处理 Vue SFC 类型
-    "target": 3.5
-  },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.d.ts",
-    "src/**/*.vue",
-    "vite.config.ts"  // 补充根目录配置文件（若有）
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue"],
+  "exclude": [
+    "node_modules", // 必排除：第三方依赖无需 TS 解析
+    "dist", // 必排除：构建产物
+    "public", // 必排除：静态资源（如图片、HTML）
+    "**/node_modules/*",
+    "**/dist/*",
   ]
 }

@@ -265,7 +265,6 @@ $height: 80px;
     z-index: 10;
     background-color: #fff;
     border-bottom: 1px solid pink;
-
     .head {
       width: 1200px;
       height: $height;

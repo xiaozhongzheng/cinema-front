@@ -7,29 +7,28 @@
         class="sidebar"
         :class="{
           'sidebar-collapsed': isCollapse,
-          'sidebar-hidden': !showSidebar && isMobile
+          'sidebar-hidden': !showSidebar && isMobile,
         }"
       >
         <!-- 折叠按钮 -->
         <div class="collapse-trigger" @click="toggleCollapse">
-          <i :class="isCollapse ? 'el-icon-s-unfold' : 'el-icon-s-fold'"></i>
+          <el-icon>
+            <Fold v-if="!isCollapse" />
+            <Expand v-else />
+          </el-icon>
         </div>
 
         <!-- 侧边栏菜单 -->
         <el-menu
-          :default-active="indexPath"
+          :default-active="currentPath"
           class="sidebar-menu"
           background-color="#545c64"
           text-color="#fff"
           active-text-color="#ffd04b"
-          router
+          :router="true"
           :collapse="isCollapse"
         >
-          <side-bar-item
-            v-for="route in routes"
-            :key="route.path"
-            :route="route"
-          ></side-bar-item>
+          <side-bar-item v-for="route in routes" :key="route.path" :route="route" />
         </el-menu>
       </aside>
 
@@ -40,23 +39,16 @@
           <div class="header-inner">
             <!-- 移动端菜单按钮 -->
             <el-button
-              icon="el-icon-menu"
+              :icon="Menu"
               class="mobile-menu-btn"
               @click="showSidebar = !showSidebar"
               v-if="isMobile"
-            ></el-button>
+            />
 
             <!-- 系统信息（Flex 项目） -->
             <div class="system-info">
-              <el-avatar
-                shape="square"
-                :size="50"
-                fit="fill"
-                :src="url"
-              ></el-avatar>
-              <span class="system-name">
-                影院管理系统-{{ roleId === 2 ? '管理员' : '员工' }}
-              </span>
+              <el-avatar shape="square" :size="50" fit="fill" :src="logoUrl" />
+              <span class="system-name"> 影院管理系统-{{ roleText }} </span>
             </div>
 
             <!-- 用户操作区（Flex 项目，靠右） -->
@@ -64,16 +56,20 @@
               <el-dropdown @command="handleCommand">
                 <span class="user-name">
                   {{ username }}
+                  <el-icon><ArrowDown /></el-icon>
                 </span>
-                <i class="el-icon-arrow-down"></i>
-                <el-dropdown-menu slot="dropdown">
-                  <el-dropdown-item command="home_page" icon="el-icon-user-solid">
-                    个人中心
-                  </el-dropdown-item>
-                  <el-dropdown-item command="out" icon="el-icon-switch-button">
-                    退出登录
-                  </el-dropdown-item>
-                </el-dropdown-menu>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="home_page">
+                      <el-icon><User /></el-icon>
+                      <span>个人中心</span>
+                    </el-dropdown-item>
+                    <el-dropdown-item command="out" divided>
+                      <el-icon><SwitchButton /></el-icon>
+                      <span>退出登录</span>
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
               </el-dropdown>
             </div>
           </div>
@@ -81,109 +77,146 @@
 
         <!-- 页面内容区 -->
         <main class="page-content">
-          <router-view></router-view>
+          <router-view />
         </main>
       </div>
     </div>
 
     <!-- 个人中心弹窗 -->
-    <MyCenterDialog v-if="visible" :visible.sync="visible"></MyCenterDialog>
+    <MyCenterDialog v-model="showDialog" />
   </div>
 </template>
 
-<script>
-import MyCenterDialog from './components/MyCenterDialog.vue';
-import SideBarItem from './components/SideBarItem.vue';
-import { useUserStore } from '@/stores'
+<script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { ElMessage, ElMessageBox } from "element-plus";
+import {
+  Fold,
+  Expand,
+  Menu,
+  ArrowDown,
+  User,
+  SwitchButton,
+} from "@element-plus/icons-vue";
+import MyCenterDialog from "./components/MyCenterDialog.vue";
+import SideBarItem from "./components/SideBarItem.vue";
+import { useUserStore } from "@/stores";
 
-export default {
-  components: {
-    MyCenterDialog,
-    SideBarItem
-  },
-  data() {
-    return {
-      indexPath: "",
-      username: "",
-      roleId: "",
-      url: require("@/assets/images/logo.png"),
-      visible: false,
-      isCollapse: false, // 侧边栏是否折叠
-      showSidebar: true, // 移动端是否显示侧边栏
-      screenWidth: 0, // 屏幕宽度
-      mobileBreakpoint: 768 // 移动端断点
-    };
-  },
-  created() {
-    // 初始化数据
-    this.indexPath = this.$route.path;
-    const s = useUserStore()
-    this.roleId = s.roleId
-    this.username = s.userInfo?.username;
+// 类型定义
+interface RouteRecord {
+  path: string;
+  name?: string;
+  meta?: any;
+  children?: RouteRecord[];
+}
 
-    // 初始化屏幕宽度并监听变化
-    this.screenWidth = window.innerWidth;
-    this.handleResponsive();
-    window.addEventListener('resize', this.handleResize);
-  },
-  destroyed() {
-    window.removeEventListener('resize', this.handleResize);
-  },
-  watch: {
-    $route(to) {
-      this.indexPath = to.path;
-    },
-    screenWidth() {
-      this.handleResponsive();
+// 组合式 API
+const route = useRoute();
+const router = useRouter();
+const userStore = useUserStore();
+
+// 响应式数据
+const currentPath = ref<string>(route.path);
+const showDialog = ref<boolean>(false);
+const isCollapse = ref<boolean>(false);
+const showSidebar = ref<boolean>(true);
+const screenWidth = ref<number>(window.innerWidth);
+const mobileBreakpoint = 768;
+
+// 计算属性
+const routes = computed((): RouteRecord[] => {
+  return router.options.routes;
+});
+
+const isMobile = computed((): boolean => {
+  return screenWidth.value < mobileBreakpoint;
+});
+
+const username = computed((): string => {
+  return userStore.userInfo?.username || "";
+});
+
+const roleId = computed((): number => {
+  return userStore.roleId || 0;
+});
+
+const roleText = computed((): string => {
+  return roleId.value === 2 ? "管理员" : "员工";
+});
+
+const logoUrl = ref<string>(new URL("@/assets/images/logo.png", import.meta.url).href);
+
+// 监听器
+watch(
+  () => route.path,
+  (newPath: string) => {
+    currentPath.value = newPath;
+  }
+);
+
+watch(screenWidth, () => {
+  handleResponsive();
+});
+
+// 生命周期
+onMounted(() => {
+  window.addEventListener("resize", handleResize);
+  handleResponsive();
+});
+
+onUnmounted(() => {
+  window.removeEventListener("resize", handleResize);
+});
+
+// 方法
+const handleResize = (): void => {
+  screenWidth.value = window.innerWidth;
+};
+
+const handleResponsive = (): void => {
+  if (isMobile.value) {
+    showSidebar.value = false;
+  } else {
+    showSidebar.value = true;
+    isCollapse.value = false;
+  }
+};
+
+const toggleCollapse = (): void => {
+  isCollapse.value = !isCollapse.value;
+};
+
+const logout = async (): Promise<void> => {
+  try {
+    await userStore.logoutAction({
+      roleId: userStore.roleId,
+      userId: userStore.userId,
+    });
+    ElMessage.success("退出成功");
+    router.push("/login");
+  } catch (error) {
+    ElMessage.error("退出失败");
+  }
+};
+
+const handleCommand = async (command: string): Promise<void> => {
+  if (command === "out") {
+    try {
+      await ElMessageBox.confirm("确定要退出登录吗？", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      });
+      await logout();
+    } catch {
+      // 用户取消操作
     }
-  },
-  computed: {
-    routes() {
-      return this.$router.options.routes;
-    },
-    // 判断是否为移动端
-    isMobile() {
-      return this.screenWidth < this.mobileBreakpoint;
-    }
-  },
-  methods: {
-    // 监听窗口大小变化
-    handleResize() {
-      this.screenWidth = window.innerWidth;
-    },
-    // 响应式处理
-    handleResponsive() {
-      // 移动端默认隐藏侧边栏
-      if (this.isMobile) {
-        this.showSidebar = false;
-      } else {
-        this.showSidebar = true;
-        this.isCollapse = false; // 非移动端默认展开
-      }
-    },
-    // 切换侧边栏折叠状态
-    toggleCollapse() {
-      this.isCollapse = !this.isCollapse;
-    },
-    // 退出登录
-    async logout(data) {
-      const s = useUserStore()
-      await s.logoutAction(data);
-      this.$message.success('退出成功');
-      this.$router.push("/login");
-    },
-    // 处理下拉菜单命令
-    handleCommand(command) {
-      if (command === "out") {
-        const s = useUserStore()
-        this.logout({
-          roleId: s.roleId,
-          userId: s.userId
-        });
-        return;
-      }
-      this.visible = true;
-    }
+    return;
+  }
+
+  if (command === "home_page") {
+    showDialog.value = true;
   }
 };
 </script>
@@ -247,6 +280,10 @@ $sidebar-bg: #545c64;
     cursor: pointer;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
     z-index: 1;
+
+    .el-icon {
+      font-size: 14px;
+    }
   }
 
   // 侧边栏菜单
@@ -254,6 +291,7 @@ $sidebar-bg: #545c64;
     width: 100%;
     height: 100%;
     padding-top: 40px; // 给折叠按钮留空间
+    border: none;
   }
 }
 
@@ -294,10 +332,12 @@ $sidebar-bg: #545c64;
     align-items: center;
     margin-left: 50%; // 给移动端按钮留空间
     background-color: pink;
+
     .system-name {
       font-size: 20px;
       font-weight: 600;
       margin-left: 10px;
+
       @media (max-width: 768px) {
         font-size: 14px;
       }
@@ -307,6 +347,9 @@ $sidebar-bg: #545c64;
   // 用户操作区
   .user-actions {
     .user-name {
+      display: flex;
+      align-items: center;
+      gap: 4px;
       font-size: 16px;
       cursor: pointer;
     }
@@ -330,6 +373,10 @@ $sidebar-bg: #545c64;
 
   .main-content {
     width: 100%;
+  }
+
+  .system-info {
+    margin-left: 40px !important;
   }
 }
 </style>

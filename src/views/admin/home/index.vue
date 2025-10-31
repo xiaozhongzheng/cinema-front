@@ -2,148 +2,149 @@
   <div id="home">
     <div class="echarts">
       <!-- 展示每部影片的票房 -->
-      <HomeBarTicket v-if="filmList.length" :itemArr="handlefilmList" :echartsOption="echartsOption"></HomeBarTicket>
+      <HomeBarTicket
+        v-if="filmList.length"
+        :itemArr="handlefilmList"
+        :echartsOption="echartsOption"
+      ></HomeBarTicket>
       <!-- 展示每个月的销量 -->
-      <HomeLine v-if="monthTicketList.length" :echartsOption="echartsOption" :itemArr="handleMonthTicketList">
+      <HomeLine
+        v-if="monthTicketList.length"
+        :echartsOption="echartsOption"
+        :itemArr="handleMonthTicketList"
+      >
       </HomeLine>
       <!-- 展示不同类型的影片的票房数  -->
       <HomePie v-if="boxOfficeList.length" :itemArr="handleBoxOfficeList"></HomePie>
-      <HomeBarAmount v-if="amountList.length" :itemArr="handleMonthAmountList" :echartsOption="echartsOption">
+      <HomeBarAmount
+        v-if="amountList.length"
+        :itemArr="handleMonthAmountList"
+        :echartsOption="echartsOption"
+      >
       </HomeBarAmount>
-
     </div>
-
   </div>
 </template>
 
-
-<script>
+<script setup>
+import { ref, computed, onMounted } from "vue";
 import { getFilmBoxOfficeApi, getMonthTicketApi, getMonthAmountApi } from "@/api/orders";
 import { getBoxOfficeByTypeApi } from "@/api/film";
 import HomeBarTicket from "./components/HomeBarTicket.vue";
 import HomePie from "./components/HomePie.vue";
 import HomeLine from "./components/HomeLine.vue";
 import HomeBarAmount from "./components/HomeBarAmount.vue";
-export default {
-  components: {
-    HomeBarTicket,
-    HomePie,
-    HomeLine,
-    HomeBarAmount
+
+// 响应式数据
+const filmList = ref([]);
+const monthTicketList = ref([]);
+const boxOfficeList = ref([]);
+const amountList = ref([]);
+
+// 图表配置
+const echartsOption = ref({
+  title: {
+    textStyle: {
+      fontSize: 30,
+      color: "black",
+    },
+    left: 20,
+    top: 20,
   },
-  data() {
+  grid: {
+    top: "20%",
+    left: "5%",
+    right: "6%",
+    bottom: "3%",
+    containLabel: true,
+  },
+  xAxis: {
+    type: "category",
+    axisTick: {
+      show: false,
+    },
+    axisLabel: {
+      show: true,
+      interval: 0,
+    },
+  },
+  yAxis: {
+    type: "value",
+    splitLine: {
+      show: true,
+    },
+    axisLine: {
+      show: true,
+    },
+  },
+});
+
+// 计算属性
+const handlefilmList = computed(() => {
+  return filmList.value.map((item) => {
     return {
-      filmList: [],
-      monthTicketList: [],
-      boxOfficeList: [],
-      amountList: [],
-      echartsOption: {
-        title: {
-          // 调整标题样式
-          textStyle: {
-            fontSize: 30,
-            color: "black",
-          },
-          left: 20, // 调整标题的位置
-          top: 20,
-        },
-        grid: {
-          // 调整坐标轴的位置
-          top: "20%",
-          left: "5%",
-          right: "6%",
-          bottom: "3%",
-          containLabel: true, // 距离是包含坐标轴上的文字
-        },
-        xAxis: {
-          type: "category",
-          axisTick: {
-            show: false, // 关闭横坐标的刻度标记
-          },
-          axisLabel: {
-            show: true, // 是否展示x轴文字
-            interval: 0, // 使x轴文字全部显示
-          },
-        },
-        yAxis: {
-          type: "value",
-          splitLine: {
-            show: true, // 显示y轴背景线
-          },
-          axisLine: {
-            show: true
-          }
-        },
-
-      }
+      name: item.name,
+      value: item.boxOffice * 100,
     };
-    // data底部
-  },
+  });
+});
 
-  mounted() { },
-  computed: {
-    handlefilmList() {
-      return this.filmList.map((item) => {
-        return {
-          name: item.name,
-          value: item.boxOffice * 100,
-        };
-      });
-    },
-    handleMonthTicketList() {
-      return this.monthTicketList.map((item) => {
-        return {
-          name: +item.month.split("-")[1] + "月",
-          value: item.ticketCount * 100
-        };
-      });
-    },
-    handleBoxOfficeList() {
-      const that = this
-      console.log(that)
-      return this.boxOfficeList.map((item) => {
-        return {
-          name: that.$constant.filmTypeArr[item.type],
-          value: item.totalBoxOffice * 100,
-        };
-      });
-    },
-    handleMonthAmountList() {
-      return this.amountList.map((item) => {
-        return {
-          name: +item.month.split("-")[1] + "月",
-          value: item.totalAmount
-        };
-      });
-    },
+const handleMonthTicketList = computed(() => {
+  return monthTicketList.value.map((item) => {
+    return {
+      name: +item.month.split("-")[1] + "月",
+      value: item.ticketCount * 100,
+    };
+  });
+});
 
-  },
-  created() {
-    this.getFilmBoxOffice();
-    this.getMonthTicket();
-    this.getBoxOfficeByType();
-    this.getMonthAmount();
-  },
-  methods: {
-    async getFilmBoxOffice() {
-      this.filmList = await getFilmBoxOfficeApi();
-      this.filmList.sort((a, b) => b.boxOffice - a.boxOffice)
-      console.log(this.filmList);
-    },
-    async getMonthTicket() {
-      this.monthTicketList = await getMonthTicketApi();
-      console.log(this.monthTicketList);
-    },
-    async getBoxOfficeByType() {
-      this.boxOfficeList = await getBoxOfficeByTypeApi();
-      console.log(this.boxOfficeList);
-    },
-    async getMonthAmount() {
-      this.amountList = await getMonthAmountApi();
-      console.log(this.amountList);
-    },
-  },
+const handleBoxOfficeList = computed(() => {
+  return boxOfficeList.value.map((item) => {
+    return {
+      name: $constant.filmTypeArr[item.type],
+      value: item.totalBoxOffice * 100,
+    };
+  });
+});
+
+const handleMonthAmountList = computed(() => {
+  return amountList.value.map((item) => {
+    return {
+      name: +item.month.split("-")[1] + "月",
+      value: item.totalAmount,
+    };
+  });
+});
+
+// 方法
+const getFilmBoxOffice = async () => {
+  filmList.value = await getFilmBoxOfficeApi();
+  filmList.value.sort((a, b) => b.boxOffice - a.boxOffice);
+  console.log(filmList.value);
 };
+
+const getMonthTicket = async () => {
+  monthTicketList.value = await getMonthTicketApi();
+  console.log(monthTicketList.value);
+};
+
+const getBoxOfficeByType = async () => {
+  boxOfficeList.value = await getBoxOfficeByTypeApi();
+  console.log(boxOfficeList.value);
+};
+
+const getMonthAmount = async () => {
+  amountList.value = await getMonthAmountApi();
+  console.log(amountList.value);
+};
+
+// 生命周期
+onMounted(() => {
+  getFilmBoxOffice();
+  getMonthTicket();
+  getBoxOfficeByType();
+  getMonthAmount();
+});
 </script>
 
 <style scoped lang="scss">

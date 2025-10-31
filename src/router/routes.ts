@@ -1,7 +1,6 @@
 import { adminRoutes } from './admin';
 import { userRoutes } from './user';
 import { employeeRoutes } from './employee';
-import constant from '@/utils/global-constant'
 
 export const routes = [
   {
