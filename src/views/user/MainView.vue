@@ -7,13 +7,27 @@
             <el-avatar shape="square" :size="50" fit="fill" :src="url"></el-avatar>
             <span> 影院购票界面</span>
           </div>
-          <el-menu :default-active="indexPath" class="el-menu-demo" mode="horizontal" router>
-            <el-menu-item v-for="(item, index) in menuList" :index="item.path"
-              :class="{ active: activeIndex === index }" :key="item.name" @click="activeIndex = index">
+          <el-menu
+            :default-active="indexPath"
+            class="el-menu-demo"
+            mode="horizontal"
+            router
+          >
+            <el-menu-item
+              v-for="(item, index) in menuList"
+              :index="item.path"
+              :class="{ active: activeIndex === index }"
+              :key="item.name"
+              @click="activeIndex = index"
+            >
               {{ item.name }}
             </el-menu-item>
           </el-menu>
-          <el-input v-model="title" placeholder="请输入要查询的电影名" class="search"></el-input>
+          <el-input
+            v-model="title"
+            placeholder="请输入要查询的电影名"
+            class="search"
+          ></el-input>
           <el-button type="success" @click="dialogVisible = true">充值</el-button>
 
           <div class="right">
@@ -24,7 +38,7 @@
 
             <el-dropdown @command="handleCommand">
               <span class="el-dropdown-link">
-                {{ user.username || '未登录' }}
+                {{ user.username || "未登录" }}
                 <el-icon class="el-icon--right"><arrow-down /></el-icon>
               </span>
               <template #dropdown>
@@ -56,12 +70,20 @@
       <el-dialog title="充值" v-model="dialogVisible" width="30%" @close="resetMoney">
         <div>
           <el-radio-group v-model="money">
-            <el-radio :label="item" border v-for="item in moneyArr" :key="item" style="width: 150px; margin: 20px">
+            <el-radio
+              :label="item"
+              border
+              v-for="item in moneyArr"
+              :key="item"
+              style="width: 150px; margin: 20px"
+            >
               {{ item }} 元
             </el-radio>
           </el-radio-group>
           优惠：
-          <span style="color: rgb(194, 199, 213)">一次性充值1000元的用户享八折优惠，充值400元以上的享九折优惠，充值200元以上的享九五折优惠</span>
+          <span style="color: rgb(194, 199, 213)"
+            >一次性充值1000元的用户享八折优惠，充值400元以上的享九折优惠，充值200元以上的享九五折优惠</span
+          >
         </div>
         <template #footer>
           <span class="dialog-footer">
@@ -76,7 +98,11 @@
         <router-view v-if="showView" :titleName="title"></router-view>
       </el-main>
     </el-container>
-    <LoginDialog v-if="showLoginDialog" :dialogVisible="showLoginDialog" @handleClose="handleClose" />
+    <LoginDialog
+      v-if="showLoginDialog"
+      :dialogVisible="showLoginDialog"
+      @handleClose="handleClose"
+    />
   </div>
 </template>
 
@@ -88,8 +114,15 @@ import { recharge as rechargeApi } from "@/api/user";
 import logo from "@/assets/images/logo.png";
 import { ElMessage } from "element-plus";
 import LoginDialog from "@/components/login";
-import userDefault from '@/assets/images/user-default.png'
-import { ShoppingCart, Document, User, Help, ArrowDown, SwitchButton } from '@element-plus/icons-vue'
+import userDefault from "@/assets/images/user-default.png";
+import {
+  ShoppingCart,
+  Document,
+  User,
+  Help,
+  ArrowDown,
+  SwitchButton,
+} from "@element-plus/icons-vue";
 // 路由和状态管理
 const route = useRoute();
 const router = useRouter();
@@ -143,10 +176,13 @@ onMounted(() => {
   showView.value = true;
 });
 
-watch(() => userStore.userInfo, (newVal) => {
-  console.log(newVal, 'newVal')
-  user.value = newVal;
-})
+watch(
+  () => userStore.userInfo,
+  (newVal) => {
+    console.log(newVal, "newVal");
+    user.value = newVal;
+  }
+);
 
 // 监听
 watch(
@@ -165,8 +201,8 @@ watch(title, () => {
 // 方法
 const handleCommand = (command: string) => {
   if (command === "login") {
-    showLoginDialog.value = true
-    return
+    showLoginDialog.value = true;
+    return;
   }
 
   if (command === "logout") {
@@ -215,7 +251,7 @@ const toShowMovies = () => {
 $height: 80px;
 
 #main {
-  width: 1440px;
+  width: 100vw;
   min-height: 100vh;
   font-size: 14px;
   position: relative;
@@ -255,7 +291,7 @@ $height: 80px;
         border: 0;
         background: transparent;
 
-        &>li {
+        & > li {
           height: 100%;
           display: flex;
           align-items: center;

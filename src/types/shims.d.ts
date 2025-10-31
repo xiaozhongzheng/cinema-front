@@ -8,3 +8,4 @@ declare module '@/store'
 declare module '@/utils/global-constant'
 declare module 'element-plus'
 declare module '@vue/runtime-core'
+                                                                                                                                                                                                                                    

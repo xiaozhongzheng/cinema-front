@@ -1,39 +1,38 @@
 <template>
-  <div id="filmHome">
-    <div class="head">
+  <div class="main">
+    <div class="header">
       <span class="title">
-        {{ status === 2 ? '正在热映' : '即将上映' }}
-        ({{ filmArr.length }})
+        {{ status === 2 ? "正在热映" : "即将上映" }}
+        ({{ filmList.length }})
       </span>
-      <el-link type="primary" style="float: right;" @click="toShowAllFilm()">
-        全部
+      <el-link type="primary" @click="toShowAllFilm()">
+        查看全部
         <i class="el-icon-arrow-right"></i>
       </el-link>
     </div>
 
-    <div class="box">
-      <template v-for="item in handleFilmArr" :key="item.id">
+    <div class="itemBox">
+      <template v-for="item in handlefilmList" :key="item.id">
         <FilmItem :item="item" />
       </template>
     </div>
   </div>
 </template>
 
-
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useRouter } from 'vue-router';
-import FilmItem from '@/views/user/components/FilmItem.vue';
+import { computed } from "vue";
+import { useRouter } from "vue-router";
+import FilmItem from "@/views/user/components/FilmItem.vue";
 
 // 定义 props
 const props = defineProps<{
-  filmArr: any[];  // 实际项目中建议定义具体的电影数据类型接口
+  filmList: any[]; // 实际项目中建议定义具体的电影数据类型接口
   status: number;
 }>();
 
 // 计算属性 - 只显示前8条数据
-const handleFilmArr = computed(() => {
-  return props.filmArr.slice(0, 8);
+const handlefilmList = computed(() => {
+  return props.filmList.slice(0, 8);
 });
 
 // 路由跳转
@@ -45,38 +44,23 @@ const toShowAllFilm = () => {
 };
 </script>
 
-
 <style scoped lang="scss">
-#filmHome {
-  margin-top: 20px;
-
-  .head {
+.main {
+  .header {
     text-align: left;
-    height: 30px;
-    line-height: 30px;
-    margin-bottom: 20px;
-
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
     .title {
       color: rgb(231, 209, 121);
-      font-size: 24px
+      font-size: 24px;
     }
   }
 
-  .box {
+  .itemBox {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, 180px);
     gap: 20px;
   }
 }
-
-.lightgreen-box {
-  background-color: lightgreen;
-  height: 24px;
-}
-
-.orange-box {
-  background-color: orange;
-  height: 24px;
-}
 </style>
-    

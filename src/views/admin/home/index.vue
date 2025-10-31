@@ -2,7 +2,7 @@
   <div id="home">
     <div class="echarts">
       <!-- 展示每部影片的票房 -->
-      <HomeBarTicket v-if="filmList.length" :itemArr="handleFilmArr" :echartsOption="echartsOption"></HomeBarTicket>
+      <HomeBarTicket v-if="filmList.length" :itemArr="handlefilmList" :echartsOption="echartsOption"></HomeBarTicket>
       <!-- 展示每个月的销量 -->
       <HomeLine v-if="monthTicketList.length" :echartsOption="echartsOption" :itemArr="handleMonthTicketList">
       </HomeLine>
@@ -82,7 +82,7 @@ export default {
 
   mounted() { },
   computed: {
-    handleFilmArr() {
+    handlefilmList() {
       return this.filmList.map((item) => {
         return {
           name: item.name,

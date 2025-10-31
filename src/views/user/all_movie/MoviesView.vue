@@ -41,9 +41,9 @@
       </div>
     </header>
 
-    <div v-if="filmArr.length">
+    <div v-if="filmList.length">
       <div class="showFilm">
-        <template v-for="film in filmArr">
+        <template v-for="film in filmList">
           <FilmItem :item="film"></FilmItem>
         </template>
       </div>
@@ -92,7 +92,7 @@ export default {
       isAllRegion: true,
       typeArr: this.$constant.filmTypeArr,
       regionArr: this.$constant.regionArr,
-      filmArr: [
+      filmList: [
         // {
         //   id: 12,
         //   title: "变形金刚",
@@ -120,7 +120,7 @@ export default {
     },
     $route(to, from) {
       if (to.path !== "/user/movies") {
-        this.filmArr = [];
+        this.filmList = [];
       }
     },
   },
@@ -133,7 +133,7 @@ export default {
         region: this.activeRegion < 0 ? "" : this.activeRegion,
         title: this.titleName,
       });
-      this.filmArr = res.records;
+      this.filmList = res.records;
       this.total = res.total;
     },
 
