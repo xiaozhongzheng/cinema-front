@@ -10,7 +10,7 @@ export const adminRoutes = {
       meta: {
         // 路由元信息 用于存储数据的
         title: '个人中心', // 标题
-        icon: 'el-icon-s-home' // 图标
+        icon: 'HomeFilled' // 图标
       }
     },
     {
@@ -19,7 +19,7 @@ export const adminRoutes = {
       meta: {
         // 路由元信息 用于存储数据的
         title: '员工管理', // 标题
-        icon: 'el-icon-user-solid' // 图标
+        icon: 'UserFilled' // 图标
       }
     },
     {
@@ -28,7 +28,7 @@ export const adminRoutes = {
       meta: {
         // 路由元信息 用于存储数据的
         title: '放映厅管理', // 标题
-        icon: 'el-icon-c-scale-to-original' // 图标
+        icon: 'LocationFilled' // 图标
       }
     },
     {
@@ -37,7 +37,7 @@ export const adminRoutes = {
       meta: {
         // 路由元信息 用于存储数据的
         title: '影片管理', // 标题
-        icon: 'el-icon-bangzhu' // 图标
+        icon: 'Menu' // 图标
       }
     },
     // {
@@ -52,7 +52,7 @@ export const adminRoutes = {
       meta: {
         // 路由元信息 用于存储数据的
         title: '查看所有订单', // 标题
-        icon: 'el-icon-tickets' // 图标
+        icon: 'List' // 图标
       }
     },
 

@@ -331,7 +331,6 @@ $sidebar-bg: #545c64;
     display: flex;
     align-items: center;
     margin-left: 50%; // 给移动端按钮留空间
-    background-color: pink;
 
     .system-name {
       font-size: 20px;

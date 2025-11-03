@@ -1,26 +1,16 @@
 <template>
   <div id="home">
+    <Demo />
+    <!-- <Demo1 /> -->
     <div class="echarts">
       <!-- 展示每部影片的票房 -->
-      <HomeBarTicket
-        v-if="filmList.length"
-        :itemArr="handlefilmList"
-        :echartsOption="echartsOption"
-      ></HomeBarTicket>
+      <HomeBarTicket v-if="filmList.length" :itemArr="handlefilmList" :echartsOption="echartsOption"></HomeBarTicket>
       <!-- 展示每个月的销量 -->
-      <HomeLine
-        v-if="monthTicketList.length"
-        :echartsOption="echartsOption"
-        :itemArr="handleMonthTicketList"
-      >
+      <HomeLine v-if="monthTicketList.length" :echartsOption="echartsOption" :itemArr="handleMonthTicketList">
       </HomeLine>
       <!-- 展示不同类型的影片的票房数  -->
       <HomePie v-if="boxOfficeList.length" :itemArr="handleBoxOfficeList"></HomePie>
-      <HomeBarAmount
-        v-if="amountList.length"
-        :itemArr="handleMonthAmountList"
-        :echartsOption="echartsOption"
-      >
+      <HomeBarAmount v-if="amountList.length" :itemArr="handleMonthAmountList" :echartsOption="echartsOption">
       </HomeBarAmount>
     </div>
   </div>
@@ -35,6 +25,8 @@ import HomePie from "./components/HomePie.vue";
 import HomeLine from "./components/HomeLine.vue";
 import HomeBarAmount from "./components/HomeBarAmount.vue";
 import { filmTypeList } from "@/utils/constant";
+import Demo from "./components/Demo.vue";
+import Demo1 from "./components/Demo1.vue";
 // 响应式数据
 const filmList = ref([]);
 const monthTicketList = ref([]);
@@ -120,22 +112,18 @@ const handleMonthAmountList = computed(() => {
 const getFilmBoxOffice = async () => {
   filmList.value = await getFilmBoxOfficeApi();
   filmList.value.sort((a, b) => b.boxOffice - a.boxOffice);
-  console.log(filmList.value);
 };
 
 const getMonthTicket = async () => {
   monthTicketList.value = await getMonthTicketApi();
-  console.log(monthTicketList.value);
 };
 
 const getBoxOfficeByType = async () => {
   boxOfficeList.value = await getBoxOfficeByTypeApi();
-  console.log(boxOfficeList.value);
 };
 
 const getMonthAmount = async () => {
   amountList.value = await getMonthAmountApi();
-  console.log(amountList.value);
 };
 
 // 生命周期
@@ -153,8 +141,8 @@ onMounted(() => {
 
   .echarts {
     display: grid;
-    grid-template-columns: repeat(2,550px);
-    grid-template-rows: repeat(2,550px);
+    grid-template-columns: repeat(2, 550px);
+    grid-template-rows: repeat(2, 550px);
     place-items: center;
     gap: 40px;
     padding: 30px 0;
