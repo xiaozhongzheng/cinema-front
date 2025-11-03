@@ -17,11 +17,11 @@
       docEl.style.fontSize = htmlFontSize + "px";
 
       // 调试用：查看关键参数（可删除）
-      console.log(
-        "当前宽度:", currentWidth,
-        "基准值:", finalBaseSize,
-        "HTML字体大小:", htmlFontSize + "px"
-      );
+      // console.log(
+      //   "当前宽度:", currentWidth,
+      //   "基准值:", finalBaseSize,
+      //   "HTML字体大小:", htmlFontSize + "px"
+      // );
     };
 
     // 初始加载与窗口缩放时执行

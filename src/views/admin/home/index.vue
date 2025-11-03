@@ -26,7 +26,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { getFilmBoxOfficeApi, getMonthTicketApi, getMonthAmountApi } from "@/api/orders";
 import { getBoxOfficeByTypeApi } from "@/api/film";
@@ -34,7 +34,7 @@ import HomeBarTicket from "./components/HomeBarTicket.vue";
 import HomePie from "./components/HomePie.vue";
 import HomeLine from "./components/HomeLine.vue";
 import HomeBarAmount from "./components/HomeBarAmount.vue";
-
+import { filmTypeList } from "@/utils/constant";
 // 响应式数据
 const filmList = ref([]);
 const monthTicketList = ref([]);
@@ -101,7 +101,7 @@ const handleMonthTicketList = computed(() => {
 const handleBoxOfficeList = computed(() => {
   return boxOfficeList.value.map((item) => {
     return {
-      name: $constant.filmTypeArr[item.type],
+      name: filmTypeList[item.type],
       value: item.totalBoxOffice * 100,
     };
   });
@@ -153,8 +153,8 @@ onMounted(() => {
 
   .echarts {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
+    grid-template-columns: repeat(2,550px);
+    grid-template-rows: repeat(2,550px);
     place-items: center;
     gap: 40px;
     padding: 30px 0;
