@@ -3,74 +3,68 @@
     <!-- 新增或修改排片弹框 -->
     <el-dialog
       :title="dialogTitle"
-      :visible.sync="showDialog"
+      v-model="dialogVisible"
       @close="cancel"
+      width="600px"
     >
       <el-form
         :model="scheduleForm"
         :rules="rules"
-        ref="scheduleForm"
+        ref="scheduleFormRef"
+        label-width="120px"
       >
         <el-form-item
           label="影片名"
-          :label-width="formLabelWidth"
-          style="width: 60%"
           prop="filmTitle"
+          class="w80"
         >
           <el-input
             v-model="scheduleForm.filmTitle"
             autocomplete="off"
             readonly
-          ></el-input>
+          />
         </el-form-item>
 
         <el-form-item
           label="放映厅"
-          :label-width="formLabelWidth"
-          style="width: 60%"
           prop="screenRoomName"
+          class="w80"
         >
           <el-select
             v-model="scheduleForm.screenRoomName"
             placeholder="请选择放映厅"
-            style="width: 100%"
           >
             <el-option
               v-for="item in screenRoomList"
               :key="item"
               :label="item"
               :value="item"
-            >
-            </el-option>
+            />
           </el-select>
         </el-form-item>
 
         <el-form-item
           label="语言"
-          :label-width="formLabelWidth"
-          style="width: 60%"
           prop="language"
+          class="w80"
         >
           <el-select
             v-model="scheduleForm.language"
             placeholder="请选择语言类型"
-            style="width: 100%"
           >
             <el-option
-              v-for="item in languageArr"
+              v-for="item in languageList"
               :key="item"
               :label="item"
               :value="item"
-            >
-            </el-option>
+            />
           </el-select>
         </el-form-item>
 
         <el-form-item
           label="日期"
-          :label-width="formLabelWidth"
-          style="width: 60%"
           prop="time"
+          class="w80"
         >
           <el-date-picker
             v-model="scheduleForm.time"
@@ -78,141 +72,230 @@
             range-separator="至"
             start-placeholder="开始日期"
             end-placeholder="结束日期"
-            value-format="yyyy-MM-dd HH:mm:ss"
-            @input="changeDate"
-          >
-          </el-date-picker>
+            value-format="YYYY-MM-DD HH:mm:ss"
+            @change="changeDate"
+          />
         </el-form-item>
-
       </el-form>
-      <div
-        slot="footer"
-        class="dialog-footer"
-      >
-        <el-button @click="cancel">取 消</el-button>
-        <el-button
-          type="primary"
-          @click="handleAddSchedule('scheduleForm')"
-        >确定</el-button>
-      </div>
+      
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="cancel">取 消</el-button>
+          <el-button
+            type="primary"
+            @click="handleAddSchedule"
+          >确定</el-button>
+        </div>
+      </template>
     </el-dialog>
   </div>
 </template>
 
-<script>
-import { getScreenRoomList } from "@/api/screen";
-import { addSchedule, updateSchedule } from "@/api/schedule";
+<script setup lang="ts">
+import { ref, reactive, watch, nextTick, type FormInstance } from 'vue'
+import { ElMessage } from 'element-plus'
+import { getScreenRoomList } from "@/api/screen"
+import { addSchedule, updateSchedule } from "@/api/schedule"
+import { languageList } from '@/utils/constant'
 
-export default {
-  props: {
-    showDialog: {
-      type: Boolean,
-      default: false,
-    },
-    film: {
-      type: Object,
-      default: null,
-    },
-    type: {
-      type: String,
-      default: "add",
-    },
-    schedule: {
-      type: Object,
-      default: null,
-    },
-  },
-  data() {
-    return {
-      scheduleForm: {
-        filmId: "",
-        filmTitle: "",
-        screenRoomName: "",
-        language: "",
-        startTime: "",
-        endTime: "",
-        time: [], // 保存开始时间和结束时间的数组
-      },
-      formLabelWidth: "120px",
-      screenRoomList: [],
-      languageArr: ["国语", "英语", "粤语", "其他"],
-      releaseDate: "",
-      rules: {
-        screenRoomName: [{ required: true, message: "请选择放映厅" }],
-        language: [{ required: true, message: "请选择语言" }],
-        time: [{ required: true, message: "请选择时间" }],
-      },
-      dialogTitle: "",
-      duration: "",
-    };
-  },
-  created() {
-    this.getScreenRoomListName();
-  },
-  methods: {
-    async getScreenRoomListName() {
-      this.screenRoomList = await getScreenRoomList();
-    },
-    changeDate(){
-      this.$forceUpdate(); // 强制更新时间（使vue重新渲染）
-    },
-    init() {
-      if (this.film) {
-        this.scheduleForm.filmId = this.film.id;
-        this.scheduleForm.filmTitle = this.film.title;
-        this.releaseDate = this.film.releaseDate;
-        this.duration = this.film.duration;
-        this.dialogTitle = "新增排片";
-      }
-      if (this.schedule) {
-        this.scheduleForm = this.schedule;
-        this.releaseDate = this.schedule.releaseDate;
-        this.duration = this.schedule.duration;
-        this.dialogTitle = "修改排片";
-      }
-    },
-    handleAddSchedule(formName) {
-      this.$refs[formName].validate(async (valid) => {
-        if (valid) {
-          let form = this.scheduleForm;
-          console.log(form.time);
-          let startTime = form.time[0];
-          let minute = (new Date(form.time[1]) - new Date(startTime)) / (60 * 1000);
+// 类型定义
+interface ScheduleForm {
+  filmId?: string | number
+  filmTitle: string
+  screenRoomName: string
+  language: string
+  startTime: string
+  endTime: string
+  time: string[] // 保存开始时间和结束时间的数组
+  id?: string | number
+}
 
-          if (startTime < this.releaseDate) {
-            this.$message.error("影片的开始时间不能早于上映时间");
-            return;
-          }
-          if (new Date(startTime) <= new Date()) {
-            this.$message.error("影片的开始时间不能早于当前时间");
-            return;
-          }
+interface Film {
+  id: string | number
+  title: string
+  releaseDate: string
+  duration: number
+  [key: string]: any
+}
 
-          if (minute != this.duration) {
-            this.$message.error("影片的时长和选择的时间不一致");
-            return;
-          }
-          form.startTime = form.time[0];
-          form.endTime = form.time[1];
-          if (this.type === "add") {
-            await addSchedule(form);
-            this.$message.success("添加排片成功");
-          } else {
-            await updateSchedule(form);
-            this.$message.success("修改排片成功");
-          }
+interface Props {
+  showDialog: boolean
+  film?: Film | null
+  type?: string
+  schedule?: ScheduleForm | null
+}
 
-          this.cancel();
-        }
-      });
-    },
+// Props 定义
+const props = withDefaults(defineProps<Props>(), {
+  showDialog: false,
+  film: null,
+  type: 'add',
+  schedule: null
+})
 
-    cancel() {
-      // this.showDialog = false; // 因为不能修改props中的属性值，所以这样写会报错
-      // 应该是修改父组件的值来实现对话框消失
-      this.$emit("cancel", false);
-      this.$refs.scheduleForm.resetFields();
-    },
-  },
-};
+// Emits 定义
+const emit = defineEmits<{
+  cancel: [value: boolean]
+}>()
+
+// 响应式数据
+const dialogVisible = ref(props.showDialog)
+const scheduleFormRef = ref<FormInstance>()
+const screenRoomList = ref<string[]>([])
+const releaseDate = ref('')
+const duration = ref(0)
+const dialogTitle = ref('')
+
+
+const scheduleForm = reactive<ScheduleForm>({
+  filmId: '',
+  filmTitle: '',
+  screenRoomName: '',
+  language: '',
+  startTime: '',
+  endTime: '',
+  time: []
+})
+
+const rules = {
+  screenRoomName: [{ required: true, message: "请选择放映厅", trigger: "change" }],
+  language: [{ required: true, message: "请选择语言", trigger: "change" }],
+  time: [{ required: true, message: "请选择时间", trigger: "change" }],
+}
+
+// 监听 props 变化
+watch(() => props.showDialog, (newVal) => {
+  dialogVisible.value = newVal
+})
+
+watch(() => props.film, (newFilm) => {
+  if (newFilm) {
+    initForm()
+  }
+})
+
+watch(() => props.schedule, (newSchedule) => {
+  if (newSchedule) {
+    initForm()
+  }
+})
+
+// 方法
+const getScreenRoomListName = async (): Promise<void> => {
+  try {
+    screenRoomList.value = await getScreenRoomList()
+  } catch (error) {
+    console.error('获取放映厅列表失败:', error)
+    ElMessage.error('获取放映厅列表失败')
+  }
+}
+
+const changeDate = (): void => {
+  // Vue 3 中通常不需要强制更新，如果需要可以使用 nextTick
+  nextTick(() => {
+    // 如果需要额外的处理可以在这里添加
+  })
+}
+
+const init = (): void => {
+  initForm()
+}
+
+const initForm = (): void => {
+  // 重置表单
+  if (scheduleFormRef.value) {
+    scheduleFormRef.value.resetFields()
+  }
+
+  Object.assign(scheduleForm, {
+    filmId: '',
+    filmTitle: '',
+    screenRoomName: '',
+    language: '',
+    startTime: '',
+    endTime: '',
+    time: []
+  })
+
+  if (props.film) {
+    scheduleForm.filmId = props.film.id
+    scheduleForm.filmTitle = props.film.title
+    releaseDate.value = props.film.releaseDate
+    duration.value = props.film.duration
+    dialogTitle.value = "新增排片"
+  }
+
+  if (props.schedule) {
+    Object.assign(scheduleForm, props.schedule)
+    releaseDate.value = props.schedule.releaseDate || ''
+    duration.value = props.schedule.duration || 0
+    dialogTitle.value = "修改排片"
+  }
+}
+
+const handleAddSchedule = async (): Promise<void> => {
+  if (!scheduleFormRef.value) return
+
+  try {
+    await scheduleFormRef.value.validate()
+    
+    const form = { ...scheduleForm }
+    const startTime = form.time[0]
+    const endTime = form.time[1]
+    const selectedDuration = (new Date(endTime).getTime() - new Date(startTime).getTime()) / (60 * 1000)
+
+    // 验证逻辑
+    if (startTime < releaseDate.value) {
+      ElMessage.error("影片的开始时间不能早于上映时间")
+      return
+    }
+
+    if (new Date(startTime) <= new Date()) {
+      ElMessage.error("影片的开始时间不能早于当前时间")
+      return
+    }
+
+    if (Math.abs(selectedDuration - duration.value) > 1) { // 允许1分钟的误差
+      ElMessage.error(`影片的时长和选择的时间不一致，影片时长: ${duration.value}分钟，选择时长: ${selectedDuration}分钟`)
+      return
+    }
+
+    form.startTime = startTime
+    form.endTime = endTime
+
+    if (props.type === "add") {
+      await addSchedule(form)
+      ElMessage.success("添加排片成功")
+    } else {
+      await updateSchedule(form)
+      ElMessage.success("修改排片成功")
+    }
+
+    cancel()
+  } catch (error) {
+    console.error('表单验证失败:', error)
+  }
+}
+
+const cancel = (): void => {
+  dialogVisible.value = false
+  emit('cancel', false)
+  if (scheduleFormRef.value) {
+    scheduleFormRef.value.resetFields()
+  }
+}
+
+// 初始化
+getScreenRoomListName()
+
+// 暴露方法给父组件
+defineExpose({
+  init
+})
 </script>
+
+<style scoped>
+.dialog-footer {
+  text-align: right;
+}
+</style>

@@ -1,7 +1,7 @@
 .DS_Store
 node_modules
 /dist
-
+/src/test/
 # macOS
 .DS_Store
 
@@ -10,6 +10,7 @@ node_modules/
 
 # production
 /dist/
+
 
 # local env files (keep .env.example in repo if you have one)
 .env.local

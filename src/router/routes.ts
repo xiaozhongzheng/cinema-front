@@ -21,6 +21,11 @@ export const routes = [
     component: () => import('@/views/user/register/index.vue')
   },
   {
+    path: '/demo',
+    hidden: true,
+    component: () => import('@/views/test/demo.vue'),
+  },
+  {
     path: '/404',
     name: '404',
     hidden: true,

@@ -28,7 +28,7 @@
         placeholder="请选择语言类型"
       >
         <el-option
-          v-for="item in languageArr"
+          v-for="item in languageList"
           :key="item"
           :label="item"
           :value="item"
@@ -146,7 +146,7 @@ export default {
       pageNo: 1,
       pageSize: 10,
       total: "",
-      languageArr: ["国语", "英语", "粤语", "其他"],
+      languageList: ["国语", "英语", "粤语", "其他"],
       screenRoomList: [],
     };
   },

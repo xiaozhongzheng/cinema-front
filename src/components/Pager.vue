@@ -1,65 +1,54 @@
 <template>
-   <div
-      class="block"
-      style="margin-top: 10px"
-    >
-      <el-pagination
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-        :current-page="pageNo"
-        :page-sizes="pageSizes"
-        :page-size="pageSize"
-        layout="total, sizes, prev, pager, next, jumper"
-        :total="total"
-        class="pageStyle"
-      >
-      </el-pagination>
-    </div>
+  <div class="block" style="margin-top: 20px">
+    <el-pagination
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+      :current-page="pageNo"
+      :page-sizes="pageSizes"
+      :page-size="pageSize"
+      layout="total, sizes, prev, pager, next, jumper"
+      :total="total"
+    />
+  </div>
 </template>
 
-<script>
-export default {
-  props: {
-    pageNo: {
-      type: Number,
-      default: 1
-    },
-    pageSize: {
-      type: Number,
-      default: 10
-    },
-    total: {
-      type: Number,
-      default: 0
-    },
-    pageSizes: {
-      type: Array,
-      default: () => [2,5,10,20]
-    }
-  },
-  data(){
-    return {
+<script setup lang="ts">
+import { defineProps, defineEmits } from 'vue'
 
-    }
-  },
-  methods: {
-    handleSizeChange(val) {
-      console.log(val);
+// 定义 props
+interface Props {
+  pageNo?: number
+  pageSize?: number
+  total?: number
+  pageSizes?: number[]
+}
 
-      this.$emit('changePageSize',val)
-    },
-    handleCurrentChange(val) {
-      console.log(val);
+const props = withDefaults(defineProps<Props>(), {
+  pageNo: 1,
+  pageSize: 10,
+  total: 0,
+  pageSizes: () => [5, 10, 20, 50]
+})
 
-      this.$emit('changePageNo',val)
-    },
-  }
+// 定义 emits
+const emit = defineEmits<{
+  changePageSize: [val: number]
+  changePageNo: [val: number]
+}>()
+
+// 方法
+const handleSizeChange = (val: number) => {
+  emit('changePageSize', val)
+}
+
+const handleCurrentChange = (val: number) => {
+  emit('changePageNo', val)
 }
 </script>
 
 <style lang="scss" scoped>
-  .block {
-    display: flex;
-    justify-content: center;
-  }
+.block {
+  display: flex;
+  justify-content: center;
+}
 </style>

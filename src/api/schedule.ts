@@ -16,7 +16,7 @@ export function updateSchedule(data: any): Promise<any> {
   })
 }
 
-export function pageQuerySchedule(params: any): Promise<any> {
+export function pageQueryScheduleApi(params: any): Promise<any> {
   return request({
     url: '/schedule/page',
     method: 'get',

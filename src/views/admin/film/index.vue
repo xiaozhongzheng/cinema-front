@@ -9,202 +9,194 @@
       :search-params-list="searchParamsList"
       :show-search-form="showSearchForm"
     >
-      <template slot="handle">
+      <template #handle>
         <el-button
           type="primary"
-          style="margin-left: 20px"
-          v-if="roleId === 2"
           @click="showEditDialog()"
         >新增影片</el-button>
       </template>
-      <template
-        slot-scope="scope"
-        slot="columnHandle"
-      >
+      <template #columnHandle="{ row }">
         <el-button
           type="success"
-          @click="showAddSchduleForm(scope.row)"
-          v-if="roleId === 1"
+          @click="showAddSchduleForm(row)"
         >排片</el-button>
 
         <el-button
           type="warning"
-          @click="showEditDialog(scope.row)"
-          v-if="roleId === 2"
+          @click="showEditDialog(row)"
         >编辑</el-button>
 
         <el-button
           type="danger"
-          @click="handleDelete(scope.row)"
-          v-if="roleId === 2"
+          @click="handleDelete(row)"
         >删除</el-button>
       </template>
     </SearchTableTemplate>
 
-    <add-schedule-dialog
-      :showDialog="dialogFormVisible"
+    <AddScheduleDialog
+      :show-dialog="dialogFormVisible"
       :film="film"
       ref="addScheduleRef"
       @cancel="cancel"
-    ></add-schedule-dialog>
-    <AddFilmDialog v-if="visible" :item="item" :visible.sync="visible" @handleSuccess="handleSuccess"></AddFilmDialog>
+    />
+    <AddFilmDialog 
+      v-if="visible" 
+      :filmItem="filmItem" 
+      v-model:visible="visible" 
+      @handle-success="handleSuccess" 
+    />
   </div>
 </template>
 
-<script>
-import { pageQueryFilm, deleteFilmById } from "@/api/film";
-import AddScheduleDialog from "../schedule/components/AddScheduleDialog.vue";
-import AddFilmDialog from "./component/AddFilmDialog.vue";
-import { useUserStore } from '@/stores'
-export default {
-  components: {
-    AddScheduleDialog,
-    SearchTableTemplate: () => import("@/components/SearchTableTemplate.vue"),
-    AddFilmDialog
-  },
-  data() {
-    return {
-      visible: false,
-      item: {},
-      typeArr: this.$constant.filmTypeArr,
-      regionArr: this.$constant.regionArr,
-      dialogFormVisible: false,
-      film: {},
-  roleId: useUserStore().roleId,
-      pageQueryApi: "",
-      extraParams: {},
-      tableParamsList: [
-        {
-          label: "名称",
-          prop: "title",
-        },
-        {
-          label: "图片",
-          prop: "image",
-          isImage: true,
-        },
-        {
-          label: "上映日期",
-          prop: "releaseDate",
-        },
-        {
-          label: "价格",
-          prop: "price",
-          width: 80
-        },
-        {
-          label: "类型",
-          prop: "type",
-          text: this.$constant.filmTypeArr,
-          width: 80
-        },
-        {
-          label: "地区",
-          prop: "region",
-          text: this.$constant.regionArr,
-          width: 80
-        },
-        {
-          label: "时长",
-          prop: "duration",
-          width: 100
-        },
-      ],
-      searchParamsList: [
-        {
-          label: "影片名",
-          prop: "title",
-          type: "input",
-          placeholder: "请输入影片名",
-        },
-        {
-          label: "类型",
-          prop: "type",
-          type: "select",
-          placeholder: "请选择类型",
-          options: this.$constant.filmTypeArr.map((item,index) => ({value: index,label: item}))
-        },
-        {
-          label: "地区",
-          prop: "region",
-          type: "select",
-          placeholder: "请选择地区",
-          options: this.$constant.regionArr.map((item,index) => ({value: index,label: item}))
-        },
-      ], // 绑定条件查询的参数
-      showSearchForm: false,
-    };
-  },
-  computed: {
+<script setup lang="ts">
+import { ref, reactive, onMounted, nextTick,h } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { pageQueryFilm, deleteFilmById } from "@/api/film"
+import AddScheduleDialog from "../schedule/components/AddScheduleDialog.vue"
+import AddFilmDialog from "./component/AddFilmDialog.vue"
+import SearchTableTemplate, { SearchParamType, TableParamType } from "@/components/SearchTableTemplate.vue"
+import { filmTypeList,regionList } from '@/utils/constant'
+// 响应式数据
+const visible = ref(false)
+const filmItem = ref({})
+const dialogFormVisible = ref(false)
+const film = ref({})
+const searchTableTemplateRef = ref(null)
+const addScheduleRef = ref(null)
 
-  },
-  created() {
+// 表格配置
+const pageQueryApi = ref('')
+const extraParams = ref({})
+const showSearchForm = ref(false)
 
-    // this.pageQuery();
-    this.pageQueryApi = pageQueryFilm;
-    this.showSearchForm = true
-    console.log(this.getTypeArr,'***')
+const tableParamsList = ref<TableParamType[]>([
+  {
+    label: "名称",
+    prop: "title",
+    width: 150,
   },
-  methods: {
-    handleSuccess(){
-      this.$refs.searchTableTemplateRef.pageQueryData()
+  {
+    label: "图片",
+    prop: "image",
+    render: (value: string) => {
+      return h('img',{src: value,class: 'img'})
     },
-
-    // toAddFilm() {
-    //   this.$router.push("/admin/addFilm");
-    // },
-    showEditDialog(row = {}) {
-      // this.$router.push({
-      //   name: "addFilm",
-      //   query: { id: row.id },
-      // });
-      this.item = row
-      this.visible = true
+    width: 200
+  },
+  {
+    label: "上映日期",
+    prop: "releaseDate",
+    width: 150
+  },
+  {
+    label: "价格",
+    prop: "price",
+    width: 80
+  },
+  {
+    label: "类型",
+    prop: "type",
+    renderText: (value: any) => {
+      return filmTypeList[value]
     },
+    width: 80
+  },
+  {
+    label: "地区",
+    prop: "region",
+     renderText: (value: any) => {
+      return regionList[value]
+    },
+    width: 80
+  },
+  {
+    label: "时长",
+    prop: "duration",
+    width: 100
+  },
+])
 
-    handleDelete(row) {
-      this.$confirm("此操作将永久删除该影片, 是否继续?", "提示", {
+const searchParamsList = ref<SearchParamType[]>([
+  {
+    label: "影片名",
+    prop: "title",
+    type: "input",
+    placeholder: "请输入影片名",
+  },
+  {
+    label: "类型",
+    prop: "type",
+    type: "select",
+    placeholder: "请选择类型",
+    options: filmTypeList.map((item, index) => ({ value: index, label: item }))
+  },
+  {
+    label: "地区",
+    prop: "region",
+    type: "select",
+    placeholder: "请选择地区",
+    options: regionList.map((item, index) => ({ value: index, label: item }))
+  },
+])
+
+// 生命周期
+onMounted(() => {
+  pageQueryApi.value = pageQueryFilm
+  showSearchForm.value = true
+})
+
+// 方法
+const handleSuccess = () => {
+  searchTableTemplateRef.value.pageQueryData()
+}
+
+const showEditDialog = (row = {}) => {
+  filmItem.value = row
+  visible.value = true
+}
+
+const handleDelete = async (row) => {
+  try {
+    await ElMessageBox.confirm(
+      "此操作将永久删除该影片, 是否继续?",
+      "提示",
+      {
         confirmButtonText: "确定",
         cancelButtonText: "取消",
         type: "warning",
-      })
-        .then(async () => {
-          const id = row.id;
-          await deleteFilmById(id);
-          this.$message({
-            type: "success",
-            message: "删除成功",
-          });
-          this.$refs.searchTableTemplateRef.pageQueryData()
-        })
-        .catch((error) => {
-          if (error == "cancel") {
-            this.$message({
-              type: "info",
-              message: "已取消删除",
-            });
-          }
-        });
-    },
+      }
+    )
+    
+    await deleteFilmById(row.id)
+    ElMessage.success("删除成功")
+    searchTableTemplateRef.value.pageQueryData()
+  } catch (error) {
+    if (error === 'cancel') {
+      ElMessage.info("已取消删除")
+    } else {
+      console.error('删除失败:', error)
+    }
+  }
+}
 
-    showAddSchduleForm(row) {
-      this.dialogFormVisible = true;
-      this.film = row;
-      // 因为前次赋值都是异步操作，执行此函数，可以使更改方法在数据更新后执
-      this.$nextTick(() => {
-        // 父组件调用子组件的方法
-        this.$refs.addScheduleRef.init();
-      });
+const showAddSchduleForm = (row) => {
+  dialogFormVisible.value = true
+  film.value = row
+  
+  nextTick(() => {
+    if (addScheduleRef.value) {
+      addScheduleRef.value.init()
+    }
+  })
+}
 
-      // this.releaseDate = row.releaseDate;
-      // this.getScreenRoomListName();
-    },
-    cancel(val) {
-      this.dialogFormVisible = val;
-    },
-  },
-};
+const cancel = () => {
+  dialogFormVisible.value = false
+}
 </script>
 
-<style scoped>
+<style>
+.img {
+  width: 120px;
+}
 </style>

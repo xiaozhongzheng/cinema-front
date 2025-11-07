@@ -32,6 +32,21 @@ export const adminRoutes = {
       }
     },
     {
+      path: '/admin/cinema',
+      component: () => import('@/views/admin/cinema'),
+      meta: {
+        title: '影院管理',
+        icon: 'LocationFilled'
+      }
+    },
+    {
+      path: '/admin/cinema/add',
+      name: 'admin-cinema-add',
+      component: () => import('@/views/admin/cinema/add.vue'),
+      hidden: true,
+      meta: { title: '新增影院' }
+    },
+    {
       path: '/admin/film',
       component: () => import('@/views/admin/film'),
       meta: {

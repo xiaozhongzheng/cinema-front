@@ -1,45 +1,21 @@
 <template>
   <div id="screen_room">
-    <!-- 新增放映厅弹框 -->
-    <el-dialog :title="title" v-model="dialogFormVisible" @close="resetForm" modal :close-on-click-modal="false">
-      <el-form :model="screenForm" :rules="rules" ref="screenFormRef">
-        <el-form-item label="名称" :label-width="formLabelWidth" prop="name" class="w80">
-          <el-input v-model="screenForm.name" autocomplete="off" placeholder="请输入名称"></el-input>
-        </el-form-item>
-        <el-form-item label="座位数" :label-width="formLabelWidth" prop="seatCount" class="w80">
-          <el-input v-model.number="screenForm.seatCount" autocomplete="off" placeholder="请填写座位数"></el-input>
-        </el-form-item>
-        <el-form-item label="类型" :label-width="formLabelWidth" prop="type" class="w80">
-          <el-select v-model="screenForm.type" placeholder="请选择放映类型" style="width: 100%">
-            <el-option label="2D" :value="2"></el-option>
-            <el-option label="3D" :value="3"></el-option>
-            <el-option label="4D" :value="4"></el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="简介" :label-width="formLabelWidth" prop="description" class="w80">
-          <el-input type="textarea" :rows="2" placeholder="请输入内容" v-model="screenForm.description"></el-input>
-        </el-form-item>
-
-      </el-form>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="resetForm">取 消</el-button>
-          <el-button type="primary" @click="handleAddOrUpdate">{{ handleType == 'add' ? '添 加' : '修 改' }}</el-button>
-        </div>
-      </template>
-    </el-dialog>
-
     <SearchTableTemplate ref="searchTableTemplateRef" v-if="pageQueryApi" :table-list-api="pageQueryApi"
       :extra-params="extraParams" :table-params-list="tableParamsList" :search-params-list="searchParamsList"
       :show-search-form="showSearchForm">
       <template #handle>
-        <el-button type="primary" @click="showAddForm">新增放映厅</el-button>
+        <el-button type="primary" @click="showAddForm">新增影院</el-button>
       </template>
       <template #columnHandle="{ row }">
         <el-button type="warning" @click="showUpdateForm(row)">修改</el-button>
         <el-button type="danger" @click="handleDelete(row)">删除</el-button>
       </template>
     </SearchTableTemplate>
+    <EditCinemaForm
+        v-if="showEditDialog"
+        v-model:showEditDialog="showEditDialog"
+        :cinemaItem="currentRow"
+     />
   </div>
 </template>
 
@@ -48,21 +24,13 @@ import { ref, reactive, onMounted, h } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import * as screenApi from "@/api/screen"
 import { useUserStore } from '@/stores'
+import EditCinemaForm from './component/EditCinemaForm.vue'
 
 // 响应式数据
-const dialogFormVisible = ref(false)
+const showEditDialog = ref(false)
 const searchTableTemplateRef = ref(null)
 const screenFormRef = ref(null)
-const formLabelWidth = '120px'
-
-const screenForm = reactive({
-  id: '',
-  name: '',
-  seatCount: '',
-  type: '',
-  description: ''
-})
-
+const currentRow = ref(null)
 const handleType = ref('add')
 const title = ref('')
 
@@ -135,28 +103,8 @@ const searchParamsList = ref([
   }
 ])
 
-// 自定义验证规则
-const validateValue = (rule: any, value: any, callback: any) => {
-  if (value < 20) {
-    callback(new Error("座位数不能低于20"))
-  } else if (value > 200) {
-    callback(new Error("座位数不能高于200"))
-  } else {
-    callback()
-  }
-}
 
-// 表单规则
-const rules = reactive({
-  name: [{ required: true, message: "请填写名称" }],
-  seatCount: [
-    { required: true, message: "请填写座位数" },
-    { type: "number", message: "座位数必须为整数" },
-    { pattern: /^[0-9]*$/, message: "只能输入正整数" },
-    { validator: validateValue }
-  ],
-  type: [{ required: true, message: "请选择类型", trigger: "change" }]
-})
+
 
 // 生命周期
 onMounted(() => {
@@ -165,7 +113,7 @@ onMounted(() => {
 
 // 方法
 const showAddForm = () => {
-  dialogFormVisible.value = true
+  showEditDialog.value = true
   handleType.value = 'add'
   title.value = '新增放映厅'
   // 重置表单
@@ -179,7 +127,7 @@ const showAddForm = () => {
 }
 
 const showUpdateForm = async (row: any) => {
-  dialogFormVisible.value = true
+  showEditDialog.value = true
   handleType.value = 'update'
   title.value = '修改放映厅'
   await getScreenById(row.id)
@@ -219,7 +167,7 @@ const handleUpdate = async () => {
 }
 
 const resetForm = () => {
-  dialogFormVisible.value = false
+  showEditDialog.value = false
   if (screenFormRef.value) {
     screenFormRef.value.resetFields()
   }
