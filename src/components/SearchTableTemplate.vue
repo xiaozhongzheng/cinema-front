@@ -21,10 +21,12 @@
               <el-date-picker v-model="searchForm[item.prop]" class="w180" type="datetime" placeholder="选择日期"
                 value-format="yyyy-MM-dd"></el-date-picker>
             </template>
+
             <template v-if="item.type === 'date'">
               <el-date-picker v-model="searchForm[item.prop]" class="w180" type="datetime" placeholder="选择日期"
                 value-format="yyyy-MM-dd"></el-date-picker>
             </template>
+            
             <template v-if="item.type === 'searchSlot'">
               <slot name="searchSlot" :searchForm="searchForm" :itemProp="item.prop"></slot>
             </template>

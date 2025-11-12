@@ -23,15 +23,6 @@ export const adminRoutes = {
       }
     },
     {
-      path: '/admin/screen',
-      component: () => import('@/views/admin/screen'),
-      meta: {
-        // 路由元信息 用于存储数据的
-        title: '放映厅管理', // 标题
-        icon: 'LocationFilled' // 图标
-      }
-    },
-    {
       path: '/admin/cinema',
       component: () => import('@/views/admin/cinema'),
       meta: {
@@ -40,11 +31,13 @@ export const adminRoutes = {
       }
     },
     {
-      path: '/admin/cinema/add',
-      name: 'admin-cinema-add',
-      component: () => import('@/views/admin/cinema/add.vue'),
-      hidden: true,
-      meta: { title: '新增影院' }
+      path: '/admin/screen',
+      component: () => import('@/views/admin/screen'),
+      meta: {
+        // 路由元信息 用于存储数据的
+        title: '放映厅管理', // 标题
+        icon: 'LocationFilled' // 图标
+      }
     },
     {
       path: '/admin/film',

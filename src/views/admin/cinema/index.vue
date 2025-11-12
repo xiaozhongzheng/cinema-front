@@ -11,54 +11,56 @@
         <el-button type="danger" @click="handleDelete(row)">删除</el-button>
       </template>
     </SearchTableTemplate>
-    <EditCinemaForm
-        v-if="showEditDialog"
-        v-model:showEditDialog="showEditDialog"
-        :cinemaItem="currentRow"
-     />
+    <EditCinemaForm v-if="showEditDialog" v-model:showEditDialog="showEditDialog" :currentRow="currentRow"
+      :isAdd="isAdd" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, h } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import * as screenApi from "@/api/screen"
-import { useUserStore } from '@/stores'
 import EditCinemaForm from './component/EditCinemaForm.vue'
+import { deleteCinemaApi, pageQueryCinemaApi } from '@/api/cinema'
+import { SearchParamType } from '@/components/SearchTableTemplate.vue'
+import { provinceOptions } from '@/utils/area'
 
 // 响应式数据
 const showEditDialog = ref(false)
 const searchTableTemplateRef = ref(null)
-const screenFormRef = ref(null)
 const currentRow = ref(null)
-const handleType = ref('add')
-const title = ref('')
-
-// 用户角色
-const userStore = useUserStore()
-const roleId = ref(userStore.roleId)
+const isAdd = ref(true)
 
 // 表格配置
 const tableParamsList = ref([
   {
-    label: '名称',
+    label: '影院名',
     prop: 'name'
   },
   {
-    label: '座位数',
-    prop: 'seatCount',
-    width: 100
+    label: '所在地区',
+    prop: 'pcaName',
+    width: 200
   },
   {
-    label: '类型',
+    label: '详细地址',
+    prop: 'address',
+    width: 200
+  },
+  {
+    label: '状态',
     prop: 'type',
     renderText: (value: any) => {
-      return value + 'D'
+      return value === 1 ? '正常' : '停业'
     },
     width: 100
   },
   {
-    label: '介绍',
+    label: '营业时间',
+    prop: 'openingHours',
+    width: 200
+  },
+  {
+    label: '简介',
     prop: 'description',
     render: (value: string) => {
       return h('div', { class: 'descText' }, value) // 构建DOM元素
@@ -77,100 +79,41 @@ const tableParamsList = ref([
 ])
 
 const extraParams = ref({})
-const pageQueryApi = ref('')
+const pageQueryApi = ref(null)
 const showSearchForm = ref(true)
 
 const searchParamsList = ref([
   {
-    label: '放映类型',
-    prop: 'type',
+    label: '影院名',
+    prop: 'name',
+    type: 'input',
+    placeholder: '请输入影院名',
+  },
+  {
+    label: '所在省份',
+    prop: 'province',
     type: 'select',
-    placeholder: '请选择放映类型',
-    options: [
-      {
-        label: '2D',
-        value: 2
-      },
-      {
-        label: '3D',
-        value: 3
-      },
-      {
-        label: '4D',
-        value: 4
-      }
-    ]
+    placeholder: '请选择所在省份',
+    options: provinceOptions
   }
-])
-
-
-
+]) as SearchParamType[]
 
 // 生命周期
 onMounted(() => {
-  pageQueryApi.value = screenApi.pageQueryScreen
+  pageQueryApi.value = pageQueryCinemaApi
 })
 
 // 方法
 const showAddForm = () => {
   showEditDialog.value = true
-  handleType.value = 'add'
-  title.value = '新增放映厅'
-  // 重置表单
-  Object.assign(screenForm, {
-    id: '',
-    name: '',
-    seatCount: '',
-    type: '',
-    description: ''
-  })
+  isAdd.value = true
+
 }
 
 const showUpdateForm = async (row: any) => {
   showEditDialog.value = true
-  handleType.value = 'update'
-  title.value = '修改放映厅'
-  await getScreenById(row.id)
-}
-
-const getScreenById = async (id: number) => {
-  const res = await screenApi.getScreenById(id)
-  Object.assign(screenForm, res)
-}
-
-const handleAddOrUpdate = async () => {
-  if (!screenFormRef.value) return
-
-  await screenFormRef.value.validate()
-  if (handleType.value === 'add') {
-    await handleAdd()
-  } else {
-    await handleUpdate()
-  }
-
-}
-
-const handleAdd = async () => {
-  await screenApi.addScreen(screenForm)
-  ElMessage.success('添加放映厅成功')
-  resetForm()
-  searchTableTemplateRef.value.pageQueryData()
-
-}
-
-const handleUpdate = async () => {
-  await screenApi.updateScreen(screenForm)
-  ElMessage.success('修改放映厅成功')
-  resetForm()
-  searchTableTemplateRef.value.pageQueryData()
-
-}
-
-const resetForm = () => {
-  showEditDialog.value = false
-  if (screenFormRef.value) {
-    screenFormRef.value.resetFields()
-  }
+  isAdd.value = false
+  currentRow.value = row
 }
 
 const handleDelete = async (row: any) => {
@@ -185,7 +128,7 @@ const handleDelete = async (row: any) => {
       }
     )
 
-    await screenApi.deleteScreen(row.id)
+    await deleteCinemaApi(row.id)
     ElMessage.success('删除放映厅成功')
     searchTableTemplateRef.value.pageQueryData()
   } catch (error) {
@@ -199,14 +142,17 @@ const handleDelete = async (row: any) => {
 }
 </script>
 
-<style >
+<style>
 .w80 {
   width: 80%;
 }
 
 .descText {
-  white-space: nowrap;  /* 强制文本在一行显示，不换行 */
-  overflow: hidden; /* 隐藏超出容器的部分 */
-  text-overflow: ellipsis; /* 超出部分用省略号代替 */
+  white-space: nowrap;
+  /* 强制文本在一行显示，不换行 */
+  overflow: hidden;
+  /* 隐藏超出容器的部分 */
+  text-overflow: ellipsis;
+  /* 超出部分用省略号代替 */
 }
 </style>
