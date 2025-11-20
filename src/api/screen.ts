@@ -1,46 +1,46 @@
 import request from '@/utils/request'
 
-export function pageQueryScreen(params: any): Promise<any> {
+export function pageQueryScreenApi(params: any): Promise<any> {
   return request({
-    url: '/screen/page',
+    url: '/screenRoom/page',
     method: 'get',
     params
   })
 }
 
-export function addScreen(data: any): Promise<any> {
+export function addScreenApi(data: any): Promise<any> {
   return request({
-    url: '/screen/save',
+    url: '/screenRoom/save',
     method: 'post',
     data
   })
 }
 
-export function getScreenById(id: number): Promise<any> {
+export function getScreenByIdApi(id: number): Promise<any> {
   return request({
-    url: `/screen/single/${id}`,
+    url: `/screenRoom/single/${id}`,
     method: 'get'
   })
 }
 
-export function updateScreen(data: any): Promise<any> {
+export function updateScreenApi(data: any): Promise<any> {
   return request({
-    url: '/screen/edit',
+    url: '/screenRoom/edit',
     method: 'put',
     data
   })
 }
 
-export function deleteScreen(id: number): Promise<any> {
+export function deleteScreenApi(id: number): Promise<any> {
   return request({
-    url: `/screen/${id}`,
+    url: `/screenRoom/${id}`,
     method: 'delete'
   })
 }
 
-export function getScreenRoomList(): Promise<any> {
+export function getScreenRoomListApi(): Promise<any> {
   return request({
-    url: '/screen/list',
+    url: '/screenRoom/list',
     method: 'get'
   })
 }

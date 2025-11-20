@@ -1,11 +1,10 @@
 declare module '*.js'
 declare module '*.json'
 declare module '@/*'
-declare module './router'
-declare module './store'
+// declare module './router'
+// declare module './store'
 declare module '@/router'
 declare module '@/store'
 declare module '@/utils/global-constant'
 declare module 'element-plus'
 declare module '@vue/runtime-core'
-                                                                                                                                                                                                                                    

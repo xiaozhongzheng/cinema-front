@@ -21,7 +21,7 @@
         <div class="title">热门榜单Top{{ num }}</div>
         <div v-if="topfilmList.length" class="rankList">
           <div class="top01" @click="toShowFilmDetail(topfilmList[0].id)">
-            <img :src="topfilmList[0].image" :alt="topfilmList[0].title" />
+            <img :src="topfilmList[0].poster" :alt="topfilmList[0].title" />
             <div class="box">
               <span>{{ topfilmList[0].title }}</span>
               <span class="score">

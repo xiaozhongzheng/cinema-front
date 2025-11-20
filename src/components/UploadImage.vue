@@ -18,8 +18,8 @@ import { upload } from "@/api/common"
 // 定义 props 类型
 interface Props {
   modelValue: string; // 图片src的值
-  width: number; // 图片的宽
-  height: number; // 图片的高
+  width?: number; // 图片的宽
+  height?: number; // 图片的高
 }
 
 // 配置默认值

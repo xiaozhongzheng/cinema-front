@@ -10,26 +10,7 @@
       :show-search-form="showSearchForm"
     >
       <template #handle>
-        <el-button
-          type="primary"
-          @click="showEditDialog()"
-        >新增影片</el-button>
-      </template>
-      <template #columnHandle="{ row }">
-        <el-button
-          type="success"
-          @click="showAddSchduleForm(row)"
-        >排片</el-button>
-
-        <el-button
-          type="warning"
-          @click="showEditDialog(row)"
-        >编辑</el-button>
-
-        <el-button
-          type="danger"
-          @click="handleDelete(row)"
-        >删除</el-button>
+        <el-button type="primary" @click="showEditDialog()">新增影片</el-button>
       </template>
     </SearchTableTemplate>
 
@@ -39,35 +20,39 @@
       ref="addScheduleRef"
       @cancel="cancel"
     />
-    <AddFilmDialog 
-      v-if="visible" 
-      :filmItem="filmItem" 
-      v-model:visible="visible" 
-      @handle-success="handleSuccess" 
+    <EditFilmDialog
+      v-if="visible"
+      :filmItem="filmItem"
+      v-model:visible="visible"
+      @handle-success="handleSuccess"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, nextTick,h } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { pageQueryFilm, deleteFilmById } from "@/api/film"
-import AddScheduleDialog from "../schedule/components/AddScheduleDialog.vue"
-import AddFilmDialog from "./component/AddFilmDialog.vue"
-import SearchTableTemplate, { SearchParamType, TableParamType } from "@/components/SearchTableTemplate.vue"
-import { filmTypeList,regionList } from '@/utils/constant'
+import { ref, reactive, onMounted, nextTick, h } from "vue";
+import { ElMessage, ElMessageBox,ElButton } from "element-plus";
+import { pageQueryFilm, deleteFilmById } from "@/api/film";
+import AddScheduleDialog from "../schedule/components/AddScheduleDialog.vue";
+import EditFilmDialog from "./components/EditFilmDialog.vue";
+import SearchTableTemplate, {
+  SearchParamType,
+  TableParamType,
+} from "@/components/SearchTableTemplate.vue";
+import { filmStatusOptions, filmTypeList, filmRegionList } from "@/utils/constant";
+import { ElTag } from "element-plus";
 // 响应式数据
-const visible = ref(false)
-const filmItem = ref({})
-const dialogFormVisible = ref(false)
-const film = ref({})
-const searchTableTemplateRef = ref(null)
-const addScheduleRef = ref(null)
+const visible = ref(false);
+const filmItem = ref({});
+const dialogFormVisible = ref(false);
+const film = ref({});
+const searchTableTemplateRef = ref(null);
+const addScheduleRef = ref(null);
 
 // 表格配置
-const pageQueryApi = ref('')
-const extraParams = ref({})
-const showSearchForm = ref(false)
+const pageQueryApi = ref("");
+const extraParams = ref({});
+const showSearchForm = ref(false);
 
 const tableParamsList = ref<TableParamType[]>([
   {
@@ -76,127 +61,162 @@ const tableParamsList = ref<TableParamType[]>([
     width: 150,
   },
   {
-    label: "图片",
-    prop: "image",
+    label: "海报",
+    prop: "poster",
     render: (value: string) => {
-      return h('img',{src: value,class: 'img'})
+      return h("img", { src: value, class: "image" });
     },
-    width: 200
+    width: 200,
   },
   {
     label: "上映日期",
     prop: "releaseDate",
-    width: 150
+    width: 150,
+  },
+   {
+    label: "下线日期",
+    prop: "endDate",
+    width: 150,
+  },
+
+  {
+    label: "影片类型",
+    prop: "types",
+    width: 100,
   },
   {
-    label: "价格",
-    prop: "price",
-    width: 80
+    label: "发行地区",
+    prop: "regions",
+    width: 100,
   },
   {
-    label: "类型",
-    prop: "type",
-    renderText: (value: any) => {
-      return filmTypeList[value]
-    },
-    width: 80
-  },
-  {
-    label: "地区",
-    prop: "region",
-     renderText: (value: any) => {
-      return regionList[value]
-    },
-    width: 80
-  },
-  {
-    label: "时长",
+    label: "时长(分钟)",
     prop: "duration",
-    width: 100
+    width: 120,
   },
-])
+   {
+    label: "上映状态",
+    prop: "status",
+    width: 150,
+    render: (value: number) => {
+      const {label,type} = filmStatusOptions.find(item => item.value === value) || {}
+      return h(ElTag,{type},() => label)
+    }
+  },
+  {
+    label: "操作",
+    width: 150,
+    prop: "option",
+    fixed: "right",
+    render: (_: any, row: any) => {
+      return h("div", { class: "action-buttons" }, [
+        h(
+          ElButton,
+          {
+            type: "warning",
+            size: "small",
+            onClick: () => showEditDialog(row),
+          },
+          () => "编辑"
+        ),
+        h(
+          ElButton,
+          {
+            type: "danger",
+            size: "small",
+            onClick: () => handleDelete(row),
+          },
+          () => "删除"
+        ),
+      ]);
+    },
+  },
+]);
 
 const searchParamsList = ref<SearchParamType[]>([
   {
     label: "影片名",
     prop: "title",
     type: "input",
-    placeholder: "请输入影片名",
+    placeholder: "请输入",
   },
   {
-    label: "类型",
-    prop: "type",
+    label: "影片类型",
+    prop: "types",
     type: "select",
-    placeholder: "请选择类型",
-    options: filmTypeList.map((item, index) => ({ value: index, label: item }))
+    placeholder: "请选择",
+    options: filmTypeList.map((typeName) => ({ value: typeName, label: typeName })),
   },
   {
-    label: "地区",
-    prop: "region",
+    label: "发行地区",
+    prop: "regions",
     type: "select",
-    placeholder: "请选择地区",
-    options: regionList.map((item, index) => ({ value: index, label: item }))
+    placeholder: "请选择",
+    options: filmRegionList.map((regionName) => ({ value: regionName, label: regionName })),
   },
-])
+  {
+    label: "上映状态",
+    prop: "status",
+    type: "select",
+    placeholder: "请选择",
+    options: filmStatusOptions,
+  },
+]);
 
 // 生命周期
 onMounted(() => {
-  pageQueryApi.value = pageQueryFilm
-  showSearchForm.value = true
-})
+  pageQueryApi.value = pageQueryFilm;
+  showSearchForm.value = true;
+});
 
 // 方法
 const handleSuccess = () => {
-  searchTableTemplateRef.value.pageQueryData()
-}
+  searchTableTemplateRef.value.pageQueryData();
+};
 
 const showEditDialog = (row = {}) => {
-  filmItem.value = row
-  visible.value = true
-}
+  filmItem.value = row;
+  visible.value = true;
+};
 
 const handleDelete = async (row) => {
   try {
-    await ElMessageBox.confirm(
-      "此操作将永久删除该影片, 是否继续?",
-      "提示",
-      {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
-        type: "warning",
-      }
-    )
-    
-    await deleteFilmById(row.id)
-    ElMessage.success("删除成功")
-    searchTableTemplateRef.value.pageQueryData()
+    await ElMessageBox.confirm("此操作将永久删除该影片, 是否继续?", "提示", {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning",
+    });
+
+    await deleteFilmById(row.id);
+    ElMessage.success("删除成功");
+    searchTableTemplateRef.value.pageQueryData();
   } catch (error) {
-    if (error === 'cancel') {
-      ElMessage.info("已取消删除")
+    if (error === "cancel") {
+      ElMessage.info("已取消删除");
     } else {
-      console.error('删除失败:', error)
+      console.error("删除失败:", error);
     }
   }
-}
+};
 
 const showAddSchduleForm = (row) => {
-  dialogFormVisible.value = true
-  film.value = row
-  
+  dialogFormVisible.value = true;
+  film.value = row;
+
   nextTick(() => {
     if (addScheduleRef.value) {
-      addScheduleRef.value.init()
+      addScheduleRef.value.init();
     }
-  })
-}
+  });
+};
 
 const cancel = () => {
-  dialogFormVisible.value = false
-}
+  dialogFormVisible.value = false;
+};
 </script>
 
 <style>
-.img {
+.image {
   width: 120px;
 }
 </style>

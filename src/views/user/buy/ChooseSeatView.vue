@@ -28,7 +28,7 @@
     <div class="left">
       <div style="width: 100%;">
         <img
-          :src="filmSchedule.image"
+          :src="filmSchedule.poster"
           width="150px"
           style="float: left;"
         >
@@ -210,7 +210,7 @@ export default {
         // filmId: 3,
         // scheduleId: 2,
         // title: "荒野机器人",
-        // image: require("E:\\img\\电影管理系统图片\\2.jpg"),
+        // poster: require("E:\\img\\电影管理系统图片\\2.jpg"),
         // filmType: 0,
         // region: 0,
         // duration: 120,
@@ -346,7 +346,7 @@ export default {
       const cart = {
         scheduleId: this.id,
         title: film.title,
-        image: film.image,
+        poster: film.poster,
         price: film.price,
         seatNumber: this.seatNumberArr,
         phone: this.phone,

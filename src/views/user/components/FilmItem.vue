@@ -1,6 +1,6 @@
 <template>
   <div class="filmItem">
-    <img :src="item.image" class="image" @click="toShowFilmDetail(item.id)">
+    <img :src="item.poster" class="poster" @click="toShowFilmDetail(item.id)">
     <div class="buyBtn" @click="toBuyFilm(item.id)">购票</div>
   </div>
 </template>
@@ -48,7 +48,7 @@ export default {
     transform: scale(1.1);
   }
 
-  .image {
+  .poster {
     width: 100%;
     height: 250px;
     display: block;

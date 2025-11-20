@@ -1,5 +1,5 @@
-import request from '@/utils/request'
-import { CinemaFormType } from './type'
+import request, { ApiResponse } from '@/utils/request'
+import { CinemaFormType, CinemaType } from './type'
 
 export function pageQueryCinemaApi(params: any): Promise<any> {
   return request({
@@ -17,8 +17,8 @@ export function addCinemaApi(data: CinemaFormType): Promise<any> {
   })
 }
 
-export function getCinemaByIdApi(id: number): Promise<any> {
-  return request<CinemaFormType>({
+export function getCinemaByIdApi(id: number): Promise<CinemaFormType> {
+  return request({
     url: `/cinema/single/${id}`,
     method: 'get'
   })
@@ -36,6 +36,13 @@ export function deleteCinemaApi(id: number): Promise<any> {
   return request({
     url: `/cinema/${id}`,
     method: 'delete'
+  })
+}
+
+export function getCinemaListApi(): Promise<CinemaType[]> {
+  return request({
+    url: `/cinema/list`,
+    method: 'get'
   })
 }
 

@@ -8,7 +8,7 @@ import router from '@/router'
 import { useUserStore } from '@/stores'
 
 // 响应数据接口
-interface ApiResponse<T = any> {
+export interface ApiResponse<T = any> {
   code: number
   data: T
   message: string

@@ -26,7 +26,7 @@
               <el-date-picker v-model="searchForm[item.prop]" class="w180" type="datetime" placeholder="选择日期"
                 value-format="yyyy-MM-dd"></el-date-picker>
             </template>
-            
+
             <template v-if="item.type === 'searchSlot'">
               <slot name="searchSlot" :searchForm="searchForm" :itemProp="item.prop"></slot>
             </template>
@@ -42,28 +42,27 @@
 
       </el-form>
     </el-space>
-    <el-table :data="resultTableList">
+    <el-table :max-height="800" :data="resultTableList">
       <template v-for="item in tableParamsList" :key="item.prop">
-        <el-table-column :width="item.width" :label="item.label" :prop="item.prop">
+        <el-table-column :fixed="item.fixed" :width="item.width" :label="item.label" :prop="item.prop">
           <template v-if="item.renderText" #default="scope">
             <!-- 渲染文本 -->
             {{ item.renderText(scope.row[item.prop]) }}
           </template>
           <template v-else-if="item.render" #default="scope">
             <!-- 渲染DOM元素 -->
-            <component :is="item.render(scope.row[item.prop])" />
+            <component :is="item.render(scope.row[item.prop],scope.row)" />
           </template>
         </el-table-column>
       </template>
 
-      <el-table-column label="操作">
+      <!-- <el-table-column label="操作">
         <template #default="scope">
           <template v-if="scope.row.username != 'admin'">
-            <!-- 采用作用域插槽，存放查看，修改，删除等功能的按钮 -->
             <slot name="columnHandle" :row="scope.row" :index="scope.$index"></slot>
           </template>
         </template>
-      </el-table-column>
+      </el-table-column> -->
     </el-table>
     <Pager :pageNo="pageParams.pager.pageNo" :pageSize="pageParams.pager.pageSize" :total="pageParams.total"
       @changePageSize="handleSizeChange" @changePageNo="handleCurrentChange"></Pager>
@@ -97,7 +96,8 @@ export interface SearchParamType {
 export interface TableParamType {
   label: string
   prop: string
-  width?: string | number
+  width?: string | number,
+  fixed: 'right' | 'left' | '',
   renderText?: (value: any) => string
   render?: (value: any) => VNode
 }
@@ -113,7 +113,6 @@ interface PageParams {
 }
 
 interface TableRow {
-  username?: string
   [key: string]: any
 }
 

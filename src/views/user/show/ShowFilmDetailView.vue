@@ -2,7 +2,7 @@
   <div id="show">
     <div class="top">
       <header>
-        <img :src="film.image" width="100%">
+        <img :src="film.poster" width="100%">
         <div class="filmItem">
           <div class="title">
             <span class="name">{{ film.title }}</span>
@@ -24,10 +24,10 @@
             主演：{{ film.actors }}
           </div>
           <div>
-            电影类型：{{ typeArr[film.type] }}
+            电影类型：{{ film.types }}
           </div>
           <div>
-            上映地区：{{ regionArr[film.region] }}
+            上映地区：{{ film.regions }}
           </div>
           <div>
             时长：{{ film.duration }} 分钟
@@ -87,7 +87,7 @@
       <template v-if="userList?.length">
         <div class="userContent" v-for="user in userList">
           <div class="left">
-            <el-avatar v-if="user.image" :src="user.image" class="avater"></el-avatar>
+            <el-avatar v-if="user.avatar" :src="user.avatar" class="avater"></el-avatar>
             <el-avatar icon="el-icon-user-solid" v-else :size="50"
               src="https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png" class="avater"></el-avatar>
             <div>
@@ -134,7 +134,7 @@ export default {
       userList: [
         {
           username: "xzz",
-          image:
+          avatar:
             "https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png",
           content: "非常好看的电影",
           score: 4.35,
@@ -142,7 +142,7 @@ export default {
         },
         {
           username: "lyt",
-          image:
+          avatar:
             "https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png",
           content: "非常好看的电影",
           score: 5,

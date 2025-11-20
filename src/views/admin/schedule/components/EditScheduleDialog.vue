@@ -3,7 +3,7 @@
     <!-- 新增或修改排片弹框 -->
     <el-dialog
       :title="dialogTitle"
-      v-model="dialogVisible"
+      :model-value="modelValue"
       @close="cancel"
       width="600px"
     >
@@ -77,7 +77,7 @@
           />
         </el-form-item>
       </el-form>
-      
+
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="cancel">取 消</el-button>
@@ -94,7 +94,7 @@
 <script setup lang="ts">
 import { ref, reactive, watch, nextTick, type FormInstance } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getScreenRoomList } from "@/api/screen"
+import { getScreenRoomListApi } from "@/api/screen"
 import { addSchedule, updateSchedule } from "@/api/schedule"
 import { languageList } from '@/utils/constant'
 
@@ -119,7 +119,7 @@ interface Film {
 }
 
 interface Props {
-  showDialog: boolean
+  modelValue: boolean
   film?: Film | null
   type?: string
   schedule?: ScheduleForm | null
@@ -127,19 +127,15 @@ interface Props {
 
 // Props 定义
 const props = withDefaults(defineProps<Props>(), {
-  showDialog: false,
+  modelValue: false,
   film: null,
   type: 'add',
   schedule: null
 })
 
 // Emits 定义
-const emit = defineEmits<{
-  cancel: [value: boolean]
-}>()
+const emit = defineEmits(['cancel','update:modelValue'])
 
-// 响应式数据
-const dialogVisible = ref(props.showDialog)
 const scheduleFormRef = ref<FormInstance>()
 const screenRoomList = ref<string[]>([])
 const releaseDate = ref('')
@@ -163,10 +159,7 @@ const rules = {
   time: [{ required: true, message: "请选择时间", trigger: "change" }],
 }
 
-// 监听 props 变化
-watch(() => props.showDialog, (newVal) => {
-  dialogVisible.value = newVal
-})
+
 
 watch(() => props.film, (newFilm) => {
   if (newFilm) {
@@ -183,7 +176,7 @@ watch(() => props.schedule, (newSchedule) => {
 // 方法
 const getScreenRoomListName = async (): Promise<void> => {
   try {
-    screenRoomList.value = await getScreenRoomList()
+    screenRoomList.value = await getScreenRoomListApi()
   } catch (error) {
     console.error('获取放映厅列表失败:', error)
     ElMessage.error('获取放映厅列表失败')
@@ -238,7 +231,7 @@ const handleAddSchedule = async (): Promise<void> => {
 
   try {
     await scheduleFormRef.value.validate()
-    
+
     const form = { ...scheduleForm }
     const startTime = form.time[0]
     const endTime = form.time[1]
@@ -278,8 +271,7 @@ const handleAddSchedule = async (): Promise<void> => {
 }
 
 const cancel = (): void => {
-  dialogVisible.value = false
-  emit('cancel', false)
+  emit('update:modelValue', false)
   if (scheduleFormRef.value) {
     scheduleFormRef.value.resetFields()
   }

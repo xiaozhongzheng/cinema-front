@@ -14,7 +14,7 @@
         >
 
           <img
-            :src="order.image"
+            :src="order.poster"
             height="100%"
             style="vertical-align: middle"
           >

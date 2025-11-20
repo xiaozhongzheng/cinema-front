@@ -32,7 +32,7 @@
 
           <div class="right">
             <template v-if="user.username">
-              <el-avatar v-if="user && user.image" :src="user.image"></el-avatar>
+              <el-avatar v-if="user && user.avatar" :src="user.avatar"></el-avatar>
               <el-avatar :src="userDefault" v-else></el-avatar>
             </template>
 
@@ -146,7 +146,7 @@ const money = ref("");
 const moneyArr = ref([50, 100, 200, 300, 400, 500, 1000]);
 const user = ref({
   username: "",
-  image: "",
+  avatar: "",
   discount: "",
 });
 const showView = ref(false);

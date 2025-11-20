@@ -25,7 +25,7 @@
               </el-checkbox>
             </div>
             <img
-              :src="cart.image"
+              :src="cart.poster"
               height="100%"
               style="vertical-align: middle;"
             >
@@ -220,7 +220,7 @@ export default {
         return {
           cartId: item.id,
           name: item.title,
-          image: item.image,
+          poster: item.poster,
           scheduleId: item.scheduleId,
           seatNumber: item.seatNumber,
           amount: item.price.toFixed(2),

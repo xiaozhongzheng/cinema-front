@@ -64,12 +64,12 @@
 
       <el-form-item
         label="头像"
-        prop="image"
+        prop="avatar"
         style="width: 30%;position: absolute;right: 20%;top: 0"
       >
         <upload-image
           show-type="user"
-          v-model="userForm.image"
+          v-model="userForm.avatar"
         ></upload-image>
       </el-form-item>
 
@@ -153,7 +153,7 @@ export default {
       userId: "",
       userForm: {
         username: "",
-        image: "",
+        avatar: "",
         name: "",
         sex: "",
         phone: "",

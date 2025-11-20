@@ -27,7 +27,7 @@ export const adminRoutes = {
       component: () => import('@/views/admin/cinema'),
       meta: {
         title: '影院管理',
-        icon: 'LocationFilled'
+        icon: 'Camera'
       }
     },
     {
@@ -36,7 +36,7 @@ export const adminRoutes = {
       meta: {
         // 路由元信息 用于存储数据的
         title: '放映厅管理', // 标题
-        icon: 'LocationFilled' // 图标
+        icon: 'Box' // 图标
       }
     },
     {
@@ -45,6 +45,15 @@ export const adminRoutes = {
       meta: {
         // 路由元信息 用于存储数据的
         title: '影片管理', // 标题
+        icon: 'Menu' // 图标
+      }
+    },
+    {
+      path: '/admin/shcedule',
+      component: () => import('@/views/admin/schedule'),
+      meta: {
+        // 路由元信息 用于存储数据的
+        title: '排片管理', // 标题
         icon: 'Menu' // 图标
       }
     },

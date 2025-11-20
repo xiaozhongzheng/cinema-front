@@ -7,7 +7,7 @@
       <div class="box">
         <div style="width: 200px;height: 260px;margin-top: 2%;float: left;">
           <img
-            :src="film.image"
+            :src="film.poster"
             width="100%"
           >
         </div>
@@ -37,13 +37,13 @@
             <span>
               电影类型：
             </span>
-            {{ typeArr[film.type] }}
+            {{ film.types }}
           </div>
           <div>
             <span>
               上映地区：
             </span>
-            {{ regionArr[film.region] }}
+            {{ film.regions }}
 
           </div>
           <div>
@@ -216,7 +216,7 @@
 
       <div v-else>
         <el-empty
-          :image-size="200"
+          :poster-size="200"
           description="暂无排片"
         ></el-empty>
       </div>

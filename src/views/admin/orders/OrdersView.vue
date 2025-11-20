@@ -48,7 +48,7 @@
       >
         <template slot-scope="scope">
           <img
-            :src="scope.row.image"
+            :src="scope.row.poster"
             height="140px"
           >
         </template>
@@ -132,7 +132,7 @@ export default {
       ordersArr: [
         {
           name: "",
-          image: "",
+          poster: "",
           username: "",
           amount: "",
           status: "",

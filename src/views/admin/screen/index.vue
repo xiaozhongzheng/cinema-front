@@ -1,264 +1,226 @@
 <template>
   <div id="screen_room">
-    <!-- 新增放映厅弹框 -->
-    <el-dialog :title="title" v-model="dialogFormVisible" @close="resetForm" modal :close-on-click-modal="false">
-      <el-form :model="screenForm" :rules="rules" ref="screenFormRef">
-        <el-form-item label="名称" :label-width="formLabelWidth" prop="name" class="w80">
-          <el-input v-model="screenForm.name" autocomplete="off" placeholder="请输入名称"></el-input>
-        </el-form-item>
-        <el-form-item label="座位数" :label-width="formLabelWidth" prop="seatCount" class="w80">
-          <el-input v-model.number="screenForm.seatCount" autocomplete="off" placeholder="请填写座位数"></el-input>
-        </el-form-item>
-        <el-form-item label="类型" :label-width="formLabelWidth" prop="type" class="w80">
-          <el-select v-model="screenForm.type" placeholder="请选择放映类型" style="width: 100%">
-            <el-option label="2D" :value="2"></el-option>
-            <el-option label="3D" :value="3"></el-option>
-            <el-option label="4D" :value="4"></el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="简介" :label-width="formLabelWidth" prop="description" class="w80">
-          <el-input type="textarea" :rows="2" placeholder="请输入内容" v-model="screenForm.description"></el-input>
-        </el-form-item>
+    <!-- 编辑放映厅表单组件 -->
+    <EditScreenForm
+      v-if="dialogFormVisible"
+      v-model:showEditDialog="dialogFormVisible"
+      :form-data="currentFormData"
+      :actionType="actionType"
+      :title="title"
+      :cinemaOptions="cinemaOptions"
+      @success="handleFormSuccess"
+    />
 
-      </el-form>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="resetForm">取 消</el-button>
-          <el-button type="primary" @click="handleAddOrUpdate">{{ handleType == 'add' ? '添 加' : '修 改' }}</el-button>
-        </div>
-      </template>
-    </el-dialog>
-
-    <SearchTableTemplate ref="searchTableTemplateRef" v-if="pageQueryApi" :table-list-api="pageQueryApi"
-      :extra-params="extraParams" :table-params-list="tableParamsList" :search-params-list="searchParamsList"
-      :show-search-form="showSearchForm">
+    <SearchTableTemplate
+      ref="searchTableTemplateRef"
+      v-if="pageQueryApi"
+      :table-list-api="pageQueryApi"
+      :extra-params="extraParams"
+      :table-params-list="tableParamsList"
+      :search-params-list="searchParamsList"
+      :show-search-form="showSearchForm"
+    >
       <template #handle>
         <el-button type="primary" @click="showAddForm">新增放映厅</el-button>
-      </template>
-      <template #columnHandle="{ row }">
-        <el-button type="warning" @click="showUpdateForm(row)">修改</el-button>
-        <el-button type="danger" @click="handleDelete(row)">删除</el-button>
       </template>
     </SearchTableTemplate>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, h } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import * as screenApi from "@/api/screen"
-import { useUserStore } from '@/stores'
+import { ref, reactive, onMounted, h } from "vue";
+import { ElMessage, ElMessageBox, ElButton } from "element-plus";
+import { useUserStore } from "@/stores";
+import EditScreenForm, {
+  ActionType,
+  ScreenFormType,
+} from "./components/EditScreenForm.vue";
+import { getCinemaListApi } from "@/api/cinema";
+import { SearchParamType } from "@/components/SearchTableTemplate.vue";
+import { screenTypeOptions } from "@/utils/constant";
+import { deleteScreenApi, getScreenByIdApi, pageQueryScreenApi } from "@/api/screen";
 
 // 响应式数据
-const dialogFormVisible = ref(false)
-const searchTableTemplateRef = ref(null)
-const screenFormRef = ref(null)
-const formLabelWidth = '120px'
+const dialogFormVisible = ref(false);
+const searchTableTemplateRef = ref(null);
+const currentFormData = ref<ScreenFormType>();
+const actionType = ref<ActionType>("add");
+const title = ref("");
 
-const screenForm = reactive({
-  id: '',
-  name: '',
-  seatCount: '',
-  type: '',
-  description: ''
-})
-
-const handleType = ref('add')
-const title = ref('')
-
-// 用户角色
-const userStore = useUserStore()
-const roleId = ref(userStore.roleId)
-
+export type CinemaOptions = {
+  label: string;
+  value: any;
+};
 // 表格配置
 const tableParamsList = ref([
   {
-    label: '名称',
-    prop: 'name'
-  },
-  {
-    label: '座位数',
-    prop: 'seatCount',
+    label: "名称",
+    prop: "name",
     width: 100
   },
   {
-    label: '类型',
-    prop: 'type',
+    label: "影院名",
+    prop: "cinemaId",
+    width: 150,
     renderText: (value: any) => {
-      return value + 'D'
+      const item =
+        cinemaOptions.value.find(
+          (item: CinemaOptions) => item.value === value
+        ) || {};
+      return item.label;
     },
-    width: 100
   },
   {
-    label: '介绍',
-    prop: 'description',
+    label: "座位数",
+    prop: "seatCount",
+    width: 80,
+  },
+  {
+    label: "类型",
+    prop: "screeningType",
+    renderText: (value: any) => {
+      return screenTypeOptions.find(item => item.value === value)?.label || '';
+    },
+    width: 100,
+  },
+  {
+    label: "介绍",
+    prop: "description",
+    width: 200,
     render: (value: string) => {
-      return h('div', { class: 'descText' }, value) // 构建DOM元素
-    }
+      return h("div", { class: "showOneRowText" }, value);
+    },
   },
   {
-    label: '创建日期',
-    prop: 'createTime',
-    width: 200
+    label: "创建日期",
+    prop: "createTime",
+    width: 200,
   },
   {
-    label: '更新日期',
-    prop: 'updateTime',
-    width: 200
-  }
-])
-
-const extraParams = ref({})
-const pageQueryApi = ref('')
-const showSearchForm = ref(true)
-
-const searchParamsList = ref([
+    label: "更新日期",
+    prop: "updateTime",
+    width: 200,
+  },
   {
-    label: '放映类型',
-    prop: 'type',
-    type: 'select',
-    placeholder: '请选择放映类型',
-    options: [
-      {
-        label: '2D',
-        value: 2
-      },
-      {
-        label: '3D',
-        value: 3
-      },
-      {
-        label: '4D',
-        value: 4
-      }
-    ]
-  }
-])
-
-// 自定义验证规则
-const validateValue = (rule: any, value: any, callback: any) => {
-  if (value < 20) {
-    callback(new Error("座位数不能低于20"))
-  } else if (value > 200) {
-    callback(new Error("座位数不能高于200"))
-  } else {
-    callback()
-  }
-}
-
-// 表单规则
-const rules = reactive({
-  name: [{ required: true, message: "请填写名称" }],
-  seatCount: [
-    { required: true, message: "请填写座位数" },
-    { type: "number", message: "座位数必须为整数" },
-    { pattern: /^[0-9]*$/, message: "只能输入正整数" },
-    { validator: validateValue }
-  ],
-  type: [{ required: true, message: "请选择类型", trigger: "change" }]
-})
+    label: "操作",
+    width: 150,
+    prop: "option",
+    fixed: "right",
+    render: (_: any, row: any) => {
+      return h("div", { class: "action-buttons" }, [
+        h(
+          ElButton,
+          {
+            type: "warning",
+            size: "small",
+            onClick: () => showUpdateForm(row),
+          },
+          () => "编辑"
+        ),
+        h(
+          ElButton,
+          {
+            type: "danger",
+            size: "small",
+            onClick: () => handleDelete(row),
+          },
+          () => "删除"
+        ),
+      ]);
+    },
+  },
+]);
+const cinemaOptions = ref<CinemaOptions[]>([]);
+const extraParams = ref({});
+const pageQueryApi = ref("");
+const showSearchForm = ref(true);
+const searchParamsList = ref<SearchParamType[]>([
+  {
+    label: "影院名",
+    prop: "cinemaId",
+    type: "select",
+    placeholder: "请选择影院名",
+    options: [],
+    filterable: true
+  },
+  {
+    label: "放映类型",
+    prop: "screeningType",
+    type: "select",
+    placeholder: "请选择放映类型",
+    options: screenTypeOptions,
+  },
+]);
 
 // 生命周期
 onMounted(() => {
-  pageQueryApi.value = screenApi.pageQueryScreen
-})
+  pageQueryApi.value = pageQueryScreenApi;
+  getCinemaList();
+});
+
+const getCinemaList = async () => {
+  const data = await getCinemaListApi();
+  console.log(data, "data");
+  cinemaOptions.value = data.map(({ id, name }) => ({
+    label: name,
+    value: id,
+  }));
+  searchParamsList.value[0].options = cinemaOptions.value
+  // console.log(cinemaOptions.value,'vcinemaOptions')
+};
 
 // 方法
 const showAddForm = () => {
-  dialogFormVisible.value = true
-  handleType.value = 'add'
-  title.value = '新增放映厅'
-  // 重置表单
-  Object.assign(screenForm, {
-    id: '',
-    name: '',
-    seatCount: '',
-    type: '',
-    description: ''
-  })
-}
+  actionType.value = "add";
+  title.value = "新增放映厅";
+  currentFormData.value = undefined;
+  dialogFormVisible.value = true;
+};
 
 const showUpdateForm = async (row: any) => {
-  dialogFormVisible.value = true
-  handleType.value = 'update'
-  title.value = '修改放映厅'
-  await getScreenById(row.id)
-}
+  actionType.value = "update";
+  title.value = "修改放映厅";
 
-const getScreenById = async (id: number) => {
-  const res = await screenApi.getScreenById(id)
-  Object.assign(screenForm, res)
-}
-
-const handleAddOrUpdate = async () => {
-  if (!screenFormRef.value) return
-
-  await screenFormRef.value.validate()
-  if (handleType.value === 'add') {
-    await handleAdd()
-  } else {
-    await handleUpdate()
+  try {
+    const res = await getScreenByIdApi(row.id);
+    currentFormData.value = res;
+    dialogFormVisible.value = true;
+  } catch (error) {
+    console.error("获取放映厅详情失败:", error);
+    ElMessage.error("获取放映厅详情失败");
   }
+};
 
-}
-
-const handleAdd = async () => {
-  await screenApi.addScreen(screenForm)
-  ElMessage.success('添加放映厅成功')
-  resetForm()
-  searchTableTemplateRef.value.pageQueryData()
-
-}
-
-const handleUpdate = async () => {
-  await screenApi.updateScreen(screenForm)
-  ElMessage.success('修改放映厅成功')
-  resetForm()
-  searchTableTemplateRef.value.pageQueryData()
-
-}
-
-const resetForm = () => {
-  dialogFormVisible.value = false
-  if (screenFormRef.value) {
-    screenFormRef.value.resetFields()
-  }
-}
+const handleFormSuccess = () => {
+  searchTableTemplateRef.value.pageQueryData();
+};
 
 const handleDelete = async (row: any) => {
   try {
-    await ElMessageBox.confirm(
-      '此操作将永久删除放映厅, 是否继续?',
-      '提示',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    )
+    await ElMessageBox.confirm("此操作将永久删除放映厅, 是否继续?", "提示", {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning",
+    });
 
-    await screenApi.deleteScreen(row.id)
-    ElMessage.success('删除放映厅成功')
-    searchTableTemplateRef.value.pageQueryData()
+    await deleteScreenApi(row.id);
+    ElMessage.success("删除放映厅成功");
+    searchTableTemplateRef.value.pageQueryData();
   } catch (error) {
-    if (error === 'cancel') {
-      ElMessage.info('已取消删除')
+    if (error === "cancel") {
+      ElMessage.info("已取消删除");
     } else {
-      console.error('删除放映厅失败:', error)
-      ElMessage.error('删除失败')
+      console.error("删除放映厅失败:", error);
+      ElMessage.error("删除失败");
     }
   }
-}
+};
 </script>
 
-<style >
-.w80 {
-  width: 80%;
-}
-
-.descText {
-  white-space: nowrap;  /* 强制文本在一行显示，不换行 */
-  overflow: hidden; /* 隐藏超出容器的部分 */
-  text-overflow: ellipsis; /* 超出部分用省略号代替 */
+<style scoped>
+.showOneRowText {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>

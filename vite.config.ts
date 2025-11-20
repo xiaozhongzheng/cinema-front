@@ -23,8 +23,8 @@ export default defineConfig({
         },
         proxy: {
             '/api': {
-                target: 'http://106.52.252.158:8080', // 上线环境
-                // target: 'http://localhost:8080', // 本地环境
+                // target: 'http://106.52.252.158:8080', // 上线环境
+                target: 'http://localhost:8080', // 本地环境
                 changeOrigin: true,
                 rewrite: (path) => path.replace(/^\/api/, '')  // 修正：参数名避免使用单个字母
             }
