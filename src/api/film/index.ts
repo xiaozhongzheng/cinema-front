@@ -64,6 +64,14 @@ export function getBoxOfficeByTypeApi(): Promise<any> {
   })
 }
 
+export function getFilmListApi(): Promise<any> {
+  return request({
+    url: `/film/list`,
+    method: 'get'
+  })
+}
+
+
 export default {
   getFilmesByStatus,
   getRecentFilmImage,

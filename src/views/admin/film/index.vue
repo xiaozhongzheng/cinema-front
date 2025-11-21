@@ -14,12 +14,12 @@
       </template>
     </SearchTableTemplate>
 
-    <AddScheduleDialog
+    <!-- <AddScheduleDialog
       :show-dialog="dialogFormVisible"
       :film="film"
       ref="addScheduleRef"
       @cancel="cancel"
-    />
+    /> -->
     <EditFilmDialog
       v-if="visible"
       :filmItem="filmItem"
@@ -33,7 +33,7 @@
 import { ref, reactive, onMounted, nextTick, h } from "vue";
 import { ElMessage, ElMessageBox,ElButton } from "element-plus";
 import { pageQueryFilm, deleteFilmById } from "@/api/film";
-import AddScheduleDialog from "../schedule/components/AddScheduleDialog.vue";
+// import AddScheduleDialog from "../schedule/components/AddScheduleDialog.vue";
 import EditFilmDialog from "./components/EditFilmDialog.vue";
 import SearchTableTemplate, {
   SearchParamType,

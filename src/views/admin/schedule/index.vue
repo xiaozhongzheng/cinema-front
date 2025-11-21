@@ -8,15 +8,15 @@
       :show-search-form="true"
       :extra-params="extraParams"
     >
-     <template #handle>
-        <el-button type="primary" @click="dialogFormVisible=true">新增影片</el-button>
+      <template #handle>
+        <el-button type="primary" @click="showAddDialog">新增影片</el-button>
       </template>
     </SearchTableTemplate>
 
     <EditScheduleDialog
       v-if="dialogFormVisible"
       v-model="dialogFormVisible"
-      :type="type"
+      :actionType="actionType"
       :schedule="scheduleForm"
       ref="addScheduleRef"
       @cancel="cancel"
@@ -49,11 +49,11 @@ interface ScheduleItem {
   time?: string[];
   [key: string]: any;
 }
-
+export type ScheduleActionType = 'add' | 'update'
 // 响应式数据
 const dialogFormVisible = ref(false);
-const type = ref("update");
-const addScheduleRef = ref<InstanceType<typeof AddScheduleDialog>>();
+const actionType = ref<ScheduleActionType>("add");
+const addScheduleRef = ref<InstanceType<typeof EditScheduleDialog>>();
 const searchTableTemplateRef = ref<InstanceType<typeof SearchTableTemplate>>();
 
 const screenRoomList = ref<string[]>([]);
@@ -72,6 +72,11 @@ const scheduleForm = reactive<ScheduleItem>({
 const extraParams = computed(() => ({
   employeeId: localStorage.getItem("id"),
 }));
+
+const showAddDialog = () => {
+  actionType.value = "add";
+  dialogFormVisible.value = true
+};
 
 // 表格列配置
 const tableParamsList = ref<TableParamType[]>([
@@ -108,7 +113,6 @@ const tableParamsList = ref<TableParamType[]>([
     prop: "createTime",
     width: 180,
   },
-
 ]);
 
 // 搜索参数配置

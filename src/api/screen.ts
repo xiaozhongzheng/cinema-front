@@ -44,3 +44,10 @@ export function getScreenRoomListApi(): Promise<any> {
     method: 'get'
   })
 }
+
+export function getScreensByCinemaIdApi(cinemaId: number): Promise<any> {
+  return request({
+    url: `/screenRoom/cinemaId/${cinemaId}`,
+    method: 'get',
+  })
+}
