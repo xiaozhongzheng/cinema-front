@@ -2,14 +2,14 @@
   <div id="schedule">
     <SearchTableTemplate
       ref="searchTableTemplateRef"
-      :table-list-api="pageQueryScheduleApi"
       :table-params-list="tableParamsList"
       :search-params-list="searchParamsList"
       :show-search-form="true"
-      :extra-params="extraParams"
+      :getTableData="getTableData"
+      :tableProps="tableProps"
     >
       <template #handle>
-        <el-button type="primary" @click="showAddDialog">新增影片</el-button>
+        <el-button type="primary" @click="showAddDialog">新增排片</el-button>
       </template>
     </SearchTableTemplate>
 
@@ -18,23 +18,33 @@
       v-model="dialogFormVisible"
       :actionType="actionType"
       :schedule="scheduleForm"
+      :filmOptions="filmOptions"
+      :cinemaOptions="cinemaOptions"
       ref="addScheduleRef"
-      @cancel="cancel"
+      @handleSuccess="handleSuccess"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, nextTick, computed } from "vue";
-import { getScreenRoomListApi } from "@/api/screen";
-import { pageQueryScheduleApi } from "@/api/schedule";
+import { ref, reactive, onMounted, nextTick, computed, h } from "vue";
+import { getScreenRoomListApi, getScreensByCinemaIdApi } from "@/api/screen";
+import { pageQueryScheduleApi, updateScheduleApi } from "@/api/schedule";
 import EditScheduleDialog from "./components/EditScheduleDialog.vue";
 import SearchTableTemplate from "@/components/SearchTableTemplate.vue";
 import type {
+  Pager,
+  PagerType,
   SearchParamType,
   TableParamType,
 } from "@/components/SearchTableTemplate.vue";
-import { languageList } from "@/utils/constant";
+import { languageList, shceduleStatusOptions } from "@/utils/constant";
+import { ElButton } from "element-plus";
+import { getCinemaListApi } from "@/api/cinema";
+import { OptionsType } from "@/api/schedule/type";
+import { getFilmListApi } from "@/api/film/index";
+import { ElTag } from "element-plus";
+import { ElMessage } from "element-plus";
 
 // 类型定义
 interface ScheduleItem {
@@ -49,16 +59,18 @@ interface ScheduleItem {
   time?: string[];
   [key: string]: any;
 }
-export type ScheduleActionType = 'add' | 'update'
+export type ScheduleActionType = "add" | "update";
 // 响应式数据
 const dialogFormVisible = ref(false);
 const actionType = ref<ScheduleActionType>("add");
 const addScheduleRef = ref<InstanceType<typeof EditScheduleDialog>>();
 const searchTableTemplateRef = ref<InstanceType<typeof SearchTableTemplate>>();
 
-const screenRoomList = ref<string[]>([]);
+const screenRoomOptions = ref<OptionsType[]>([]);
+const cinemaOptions = ref<OptionsType[]>([]);
+const filmOptions = ref<OptionsType[]>([]);
 
-const scheduleForm = reactive<ScheduleItem>({
+const scheduleForm = ref<ScheduleItem>({
   filmTitle: "",
   screenRoomName: "",
   language: "",
@@ -68,21 +80,28 @@ const scheduleForm = reactive<ScheduleItem>({
   createTime: "",
 });
 
-// 计算属性 - 额外参数
-const extraParams = computed(() => ({
-  employeeId: localStorage.getItem("id"),
-}));
+const handleSelectChange = (val) => {
+  console.log(val,'val')
+}
 
-const showAddDialog = () => {
-  actionType.value = "add";
-  dialogFormVisible.value = true
-};
+const tableProps = {
+  'selection-change': handleSelectChange
+}
 
 // 表格列配置
 const tableParamsList = ref<TableParamType[]>([
   {
+    type: 'selection',
+    width: 60
+  },
+  {
+    label: "影院名",
+    prop: "cinemaName",
+    width: 180,
+  },
+  {
     label: "影片名",
-    prop: "filmTitle",
+    prop: "filmName",
     width: 180,
   },
   {
@@ -101,6 +120,10 @@ const tableParamsList = ref<TableParamType[]>([
     width: 100,
   },
   {
+    label: "放映日期",
+    prop: "screeningDate",
+  },
+  {
     label: "开始时间",
     prop: "startTime",
   },
@@ -109,11 +132,74 @@ const tableParamsList = ref<TableParamType[]>([
     prop: "endTime",
   },
   {
-    label: "排片时间",
+    label: "排片状态",
+    width: 100,
+    prop: "status",
+    render: (val: number) => {
+      const { label, type = '' } =
+        shceduleStatusOptions.find((item: any) => item.value === val) || {};
+      return h(
+        ElTag,
+        {
+          type,
+        },
+        () => label
+      );
+    },
+  },
+  {
+    label: "创建时间",
     prop: "createTime",
     width: 180,
   },
+  {
+    label: "更新时间",
+    prop: "updateTime",
+    width: 180,
+  },
+  {
+    label: "操作",
+    width: 150,
+    prop: "option",
+    fixed: "right",
+    render: (_: any, row: any) => {
+      console.log(row.status, "row");
+
+      return h("div", { class: "action-buttons" }, [
+        h(
+          ElButton,
+          {
+            type: "warning",
+            size: "small",
+            onClick: () => showEditDialog(row),
+          },
+          () => "编辑"
+        ),
+        row.status === 1
+          ? h(
+              ElButton,
+              {
+                type: "success",
+                size: "small",
+                onClick: () => handlePublish(row),
+              },
+              () => "发布"
+            )
+          : null,
+      ]);
+    },
+  },
 ]);
+
+const handleCinemaChange = async (id: number) => {
+  if (!id) return;
+  const data = (await getScreensByCinemaIdApi(id)) || [];
+  screenRoomOptions.value = data.map((item: any) => ({
+    ...item,
+    label: item.name as string,
+    value: item.id,
+  }));
+};
 
 // 搜索参数配置
 const searchParamsList = ref<SearchParamType[]>([
@@ -122,18 +208,52 @@ const searchParamsList = ref<SearchParamType[]>([
     prop: "title",
     type: "input",
     placeholder: "请输入影片名",
+
+  },
+  {
+    label: "影院",
+    prop: "cinemaId",
+    type: "select",
+    placeholder: "请选择影院",
+    options: computed(() =>
+      cinemaOptions.value.map((item: any) => ({
+        label: item.label,
+        value: item.value,
+      }))
+    ),
+    attrs: {
+      onChange: handleCinemaChange,
+      filterable: true,
+    },
   },
   {
     label: "放映厅",
-    prop: "screenRoomName",
+    prop: "screenRoomId",
     type: "select",
     placeholder: "请选择放映厅",
     options: computed(() =>
-      screenRoomList.value.map((item) => ({
-        label: item,
-        value: item,
+      screenRoomOptions.value.map((item: any) => ({
+        label: item.label,
+        value: item.value,
       }))
     ),
+  },
+  {
+    label: "影片",
+    prop: "filmId",
+    type: "select",
+    options: computed(() =>
+      filmOptions.value.map((item: any) => ({
+        label: item.label,
+        value: item.value,
+      }))
+    ),
+    attrs: {
+      placeholder: "请选择影片",
+      multiple: true,
+      clearable: true,
+      filterable: true,
+    },
   },
   {
     label: "语言类型",
@@ -145,52 +265,96 @@ const searchParamsList = ref<SearchParamType[]>([
       value: item,
     })),
   },
+  {
+    label: "排片日期",
+    prop: "scheduleDates",
+    type: "time",
+    attrs: {
+      "start-placeholder": "请选择开始时间",
+      "end-placeholder": "请选择结束时间",
+      type: "daterange",
+      format: "YYYY-MM-DD",
+      "value-format": "YYYY-MM-DD",
+    },
+  },
 ]);
 
 // 生命周期
 onMounted(() => {
   getScreenRoomListName();
+  initCinemaList();
+  initFilmList();
 });
+const handlePublish = async (row: any) => {
+  await updateScheduleApi({ ...row, status: 2 });
+  ElMessage.success("发布成功");
+  reloadData();
+};
+const getTableData = async (
+  pageParams: PagerType,
+  searchParams: Record<string, any>
+) => {
+  console.log(pageParams, searchParams, "getTableData==");
+  const { scheduleDates = [], ...restParams } = searchParams;
+  const res = await pageQueryScheduleApi({
+    ...pageParams,
+    ...restParams,
+    startDate: scheduleDates[0],
+    endDate: scheduleDates[1],
+  });
+
+  return {
+    data: res.records,
+    total: res.total,
+  };
+};
+
+const initCinemaList = async () => {
+  const data = (await getCinemaListApi()) || [];
+  cinemaOptions.value = data.map((item: any) => ({
+    ...item,
+    label: item.name as string,
+    value: item.id,
+  }));
+};
+const initFilmList = async () => {
+  const data = (await getFilmListApi()) || [];
+  filmOptions.value = data.map((item: any) => ({
+    ...item,
+    label: item.title as string,
+    value: item.id,
+  }));
+};
+
+const showAddDialog = () => {
+  actionType.value = "add";
+  dialogFormVisible.value = true;
+  scheduleForm.value = {};
+};
 
 // 方法
 const getScreenRoomListName = async (): Promise<void> => {
-  try {
-    screenRoomList.value = await getScreenRoomList();
-  } catch (error) {
-    console.error("获取放映厅列表失败:", error);
-  }
+  const data = await getScreenRoomListApi();
+  screenRoomOptions.value = data.map((item: any) => ({
+    label: item.name,
+    value: item.id,
+  }));
 };
 
-const showEditSchduleForm = (row: ScheduleItem): void => {
+const showEditDialog = (row: ScheduleItem): void => {
+  actionType.value = "edit";
   dialogFormVisible.value = true;
-  Object.assign(scheduleForm, row);
-  scheduleForm.time = [scheduleForm.startTime, scheduleForm.endTime];
-
-  nextTick(() => {
-    if (addScheduleRef.value) {
-      addScheduleRef.value.init();
-    }
-  });
+  scheduleForm.value = { ...row };
+  scheduleForm.value.startDateTime = `${row.screeningDate}  ${row.startTime}`;
 };
 
-const cancel = (val: boolean): void => {
-  dialogFormVisible.value = val;
-  // 重置表单数据
-  Object.keys(scheduleForm).forEach((key) => {
-    if (key in scheduleForm) {
-      if (key === "time") {
-        scheduleForm[key] = [];
-      } else {
-        scheduleForm[key] = "" as any;
-      }
-    }
-  });
-  scheduleForm.duration = 0;
+const reloadData = () => {
+  searchTableTemplateRef.value?.pageQuery();
+};
 
+const handleSuccess = (): void => {
   // 刷新表格数据
-  if (searchTableTemplateRef.value) {
-    searchTableTemplateRef.value.pageQueryData();
-  }
+  reloadData();
 };
 </script>
 

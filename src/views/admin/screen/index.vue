@@ -13,12 +13,12 @@
 
     <SearchTableTemplate
       ref="searchTableTemplateRef"
-      v-if="pageQueryApi"
-      :table-list-api="pageQueryApi"
       :extra-params="extraParams"
       :table-params-list="tableParamsList"
       :search-params-list="searchParamsList"
       :show-search-form="showSearchForm"
+      :getTableData="getTableData"
+
     >
       <template #handle>
         <el-button type="primary" @click="showAddForm">新增放映厅</el-button>
@@ -36,7 +36,7 @@ import EditScreenForm, {
   ScreenFormType,
 } from "./components/EditScreenForm.vue";
 import { getCinemaListApi } from "@/api/cinema";
-import { SearchParamType } from "@/components/SearchTableTemplate.vue";
+import { PagerType, SearchParamType } from "@/components/SearchTableTemplate.vue";
 import { screenTypeOptions } from "@/utils/constant";
 import { deleteScreenApi, getScreenByIdApi, pageQueryScreenApi } from "@/api/screen";
 
@@ -132,7 +132,6 @@ const tableParamsList = ref([
 ]);
 const cinemaOptions = ref<CinemaOptions[]>([]);
 const extraParams = ref({});
-const pageQueryApi = ref("");
 const showSearchForm = ref(true);
 const searchParamsList = ref<SearchParamType[]>([
   {
@@ -151,10 +150,21 @@ const searchParamsList = ref<SearchParamType[]>([
     options: screenTypeOptions,
   },
 ]);
+const getTableData = async (pageParams: PagerType, searchParams: Record<string,any>) => {
+
+  const res = await pageQueryScreenApi({
+    ...pageParams,
+    ...searchParams,
+  });
+
+  return {
+    data: res.records,
+    total: res.total
+  }
+};
 
 // 生命周期
 onMounted(() => {
-  pageQueryApi.value = pageQueryScreenApi;
   getCinemaList();
 });
 
@@ -192,7 +202,7 @@ const showUpdateForm = async (row: any) => {
 };
 
 const handleFormSuccess = () => {
-  searchTableTemplateRef.value.pageQueryData();
+  searchTableTemplateRef.value.pageQuery();
 };
 
 const handleDelete = async (row: any) => {
@@ -205,7 +215,7 @@ const handleDelete = async (row: any) => {
 
     await deleteScreenApi(row.id);
     ElMessage.success("删除放映厅成功");
-    searchTableTemplateRef.value.pageQueryData();
+    searchTableTemplateRef.value.pageQuery();
   } catch (error) {
     if (error === "cancel") {
       ElMessage.info("已取消删除");

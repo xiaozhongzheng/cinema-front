@@ -2,12 +2,11 @@
   <div id="film">
     <SearchTableTemplate
       ref="searchTableTemplateRef"
-      v-if="pageQueryApi"
-      :table-list-api="pageQueryApi"
       :extra-params="extraParams"
       :table-params-list="tableParamsList"
       :search-params-list="searchParamsList"
-      :show-search-form="showSearchForm"
+      :show-search-form="true"
+      :getTableData="getTableData"
     >
       <template #handle>
         <el-button type="primary" @click="showEditDialog()">新增影片</el-button>
@@ -36,6 +35,7 @@ import { pageQueryFilm, deleteFilmById } from "@/api/film";
 // import AddScheduleDialog from "../schedule/components/AddScheduleDialog.vue";
 import EditFilmDialog from "./components/EditFilmDialog.vue";
 import SearchTableTemplate, {
+  PagerType,
   SearchParamType,
   TableParamType,
 } from "@/components/SearchTableTemplate.vue";
@@ -49,10 +49,7 @@ const film = ref({});
 const searchTableTemplateRef = ref(null);
 const addScheduleRef = ref(null);
 
-// 表格配置
-const pageQueryApi = ref("");
 const extraParams = ref({});
-const showSearchForm = ref(false);
 
 const tableParamsList = ref<TableParamType[]>([
   {
@@ -163,15 +160,23 @@ const searchParamsList = ref<SearchParamType[]>([
   },
 ]);
 
-// 生命周期
-onMounted(() => {
-  pageQueryApi.value = pageQueryFilm;
-  showSearchForm.value = true;
-});
+const getTableData = async (pageParams: PagerType, searchParams: Record<string,any>) => {
+
+  const res = await pageQueryFilm({
+    ...pageParams,
+    ...searchParams,
+  });
+
+  return {
+    data: res.records,
+    total: res.total
+  }
+};
+
 
 // 方法
 const handleSuccess = () => {
-  searchTableTemplateRef.value.pageQueryData();
+  searchTableTemplateRef.value.pageQuery();
 };
 
 const showEditDialog = (row = {}) => {
@@ -189,7 +194,7 @@ const handleDelete = async (row) => {
 
     await deleteFilmById(row.id);
     ElMessage.success("删除成功");
-    searchTableTemplateRef.value.pageQueryData();
+    searchTableTemplateRef.value.pageQuery();
   } catch (error) {
     if (error === "cancel") {
       ElMessage.info("已取消删除");

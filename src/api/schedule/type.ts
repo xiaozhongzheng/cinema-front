@@ -1,7 +1,8 @@
 
 export type OptionsType = {
-  label: string,
-  value: any
+  label: string | number;
+  value: any;
+  [key: string]: any;
 }
 
 export interface ScheduleFormType {
@@ -9,6 +10,7 @@ export interface ScheduleFormType {
   screenRoomId: number;
   filmId: number;
   language: string;
+  screeningDate: string;
   startTime: string;
   endTime: string;
   price: number;

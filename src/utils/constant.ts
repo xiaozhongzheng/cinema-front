@@ -4,28 +4,23 @@ export const filmRegionList = ["内地", "香港", "台湾", "日本", "美国",
 export const languageList = ['国语', '英语', '粤语', '其他']
 
 export const screenTypeOptions = [
-  {
-    label: "2D", // 普通二维电影
-    value: 1,
-  },
-  {
-    label: "3D", // 立体三维电影
-    value: 2,
-  },
-  {
-    label: "IMAX", // 巨幕电影
-    value: 3,
-  },
-  {
-    label: "IMAX_3D", // IMAX三维电影
-    value: 4,
-  },
+  { label: "2D", value: 1, },
+  { label: "3D", value: 2, },
+  { label: "IMAX", value: 3, }, // 巨幕电影
+  { label: "IMAX_3D", value: 4, },// IMAX三维电影
 ]
 
 export const filmStatusOptions = [
-  {label: '即将上映',value: 1},
-  {label: '已上映',value: 2,type: 'success'},
-  {label: '已下线',value: 3,type: 'danger'}
+  { label: '即将上映', value: 1 },
+  { label: '已上映', value: 2, type: 'success' },
+  { label: '已下线', value: 3, type: 'danger' }
+]
+
+export const shceduleStatusOptions = [
+  {label: '已取消',value: 0,type:'warning'},
+  {label: '未发布',value: 1},
+  {label: '已发布',value: 2,type: 'success'},
+  {label: '已结束',value: 3,type: 'danger'}
 ]
 
 export const host = 'localhost'

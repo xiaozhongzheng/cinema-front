@@ -40,15 +40,7 @@ export const employeeRoutes = {
         icon: 'el-icon-s-help' // 图标
       }
     },
-    {
-      path: '/employee/query/allSchedule',
-      component: () => import('@/views/admin/schedule/ScheduleView.vue'),
-      meta: {
-        // 路由元信息 用于存储数据的
-        title: '查看所有排片', // 标题
-        icon: 'el-icon-s-data' // 图标
-      }
-    },
+
 
   ]
 }

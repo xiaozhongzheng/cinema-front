@@ -4,8 +4,9 @@
     <el-dialog
       :title="actionType === 'add' ? '新增排片' : '编辑排片'"
       :model-value="modelValue"
-      @close="cancel"
+      @close="handleCancel"
       width="600px"
+      :close-on-click-modal="false"
     >
       <el-form
         :model="scheduleForm"
@@ -13,19 +14,13 @@
         ref="scheduleFormRef"
         label-width="120px"
       >
-        <!-- <el-form-item label="影片名" prop="filmTitle" class="w80">
-          <el-input
-            v-model="scheduleForm.filmTitle"
-            autocomplete="off"
-            readonly
-          />
-        </el-form-item> -->
         <el-form-item label="影院" prop="cinemaId" class="w80">
           <el-select
             v-model="scheduleForm.cinemaId"
             placeholder="请选择影院"
             @change="handleCinemaChange"
             filterable
+            clearable
           >
             <el-option
               v-for="item in cinemaOptions"
@@ -54,6 +49,8 @@
             v-model="scheduleForm.filmId"
             placeholder="请选择影片"
             filterable
+            clearable
+            @change="handleFilmChange"
           >
             <el-option
               v-for="item in filmOptions"
@@ -89,7 +86,7 @@
 
         <el-form-item label="开始日期" prop="startDateTime" class="w80">
           <el-date-picker
-            v-model="scheduleForm.startTimes"
+            v-model="scheduleForm.startDateTime"
             type="datetime"
             placeholder="选择开始日期"
             format="YYYY-MM-DD HH:mm"
@@ -100,7 +97,7 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="cancel">取 消</el-button>
+          <el-button @click="handleCancel">取 消</el-button>
           <el-button type="primary" @click="handleAddSchedule">确定</el-button>
         </div>
       </template>
@@ -119,53 +116,45 @@ import {
 } from "vue";
 import { ElMessage } from "element-plus";
 import { getScreenRoomListApi, getScreensByCinemaIdApi } from "@/api/screen";
-import { addSchedule, updateSchedule } from "@/api/schedule";
 import { languageList } from "@/utils/constant";
 import { ScheduleActionType } from "../index.vue";
 import { ScheduleFormType, type OptionsType } from "@/api/schedule/type";
-import { getCinemaListApi } from "@/api/cinema";
-import { getFilmListApi } from "@/api/film/index";
 import { FilmResultType } from "@/api/film/type";
-
-interface Film {
-  id: string | number;
-  title: string;
-  releaseDate: string;
-  duration: number;
-  [key: string]: any;
-}
+import dayjs from "dayjs";
+import { addScheduleApi, updateScheduleApi } from "@/api/schedule";
 
 interface Props {
   modelValue: boolean;
-  film?: Film | null;
   actionType?: ScheduleActionType;
   schedule?: ScheduleFormType | null;
+  filmOptions: OptionsType[];
+  cinemaOptions: OptionsType[];
 }
 
 // Props 定义
 const props = withDefaults(defineProps<Props>(), {
   modelValue: false,
-  film: null,
   actionType: "add",
   schedule: null,
+  filmOptions: [],
+  cinemaOptions: [],
 });
 
 // Emits 定义
-const emit = defineEmits(["cancel", "update:modelValue"]);
+const emit = defineEmits(["handleSuccess", "update:modelValue"]);
 
 const scheduleFormRef = ref<FormInstance>();
 const screenRoomOptions = ref<OptionsType[]>([]);
-const cinemaOptions = ref<OptionsType[]>([]);
-const filmOptions = ref<OptionsType[]>([]);
-const filmItem = ref<FilmResultType>({})
+const filmItem = ref<FilmResultType>({});
 const scheduleForm = reactive<ScheduleFormType>({});
 const validateDateTime = (rule: any, value: any, callback: any) => {
-  const curTimestamp = new Date(value).getTime()
-  const releaseDate =
-  // if (!/^\d+(\.\d{0,1})?$/.test(value)) {
-  //   callback(new Error("请输入正整数或保留1位小数"));
-  //   return;
-  // }
+  const curTimestamp = new Date(value).getTime();
+  const releaseDateTimestamp = new Date(filmItem.value.releaseDate).getTime();
+  console.log(curTimestamp, releaseDateTimestamp, "releaseDateTimestamp");
+  if (releaseDateTimestamp >= curTimestamp) {
+    callback(new Error("影片开始时间不能早于上映时间"));
+    return;
+  }
 
   callback();
 };
@@ -177,7 +166,7 @@ const rules = {
   filmId: [{ required: true, message: "请选择影片", trigger: "change" }],
   language: [{ required: true, message: "请选择语言", trigger: "change" }],
   price: [
-    { required: true, message: "请输入价格", trigger: "change" },
+    { required: true, message: "请输入价格" },
     {
       validator: (rule: any, value: any, callback: any) => {
         // 验证数字格式：正整数或1位小数
@@ -191,108 +180,70 @@ const rules = {
     },
   ],
   startDateTime: [
-    { required: true, message: "请选择时间", trigger: "change" },
+    { required: true, message: "请选择时间" },
     { validator: validateDateTime },
   ],
 };
 
 onMounted(() => {
-  initCinemaList();
-  initFilmList();
+  initEditData();
 });
+const initEditData = () => {
+  console.log(props.schedule, "props.schedule");
+  Object.assign(scheduleForm, props.schedule);
+  const { cinemaId, filmId } = { ...props.schedule };
+  cinemaId && handleCinemaChange(cinemaId);
+  filmId && handleFilmChange(filmId);
+};
+const handleFilmChange = (id: number) => {
+  console.log(id, "film id");
+  filmItem.value = props.filmOptions.find(
+    (item: FilmResultType) => item.id === id
+  );
+  console.log(filmItem.value, "filmItem.value");
+};
 const handlePrice = (val: string) => {
   if (!val) return;
   scheduleForm.price = Number(val);
 };
-const handleCinemaChange = (id: number) => {
-  console.log(id, "id");
-  getScreensByCinemaId(id);
-};
-
-const getScreensByCinemaId = async (id: number) => {
+const handleCinemaChange = async (id: number) => {
+  if(!id) return
   const data = (await getScreensByCinemaIdApi(id)) || [];
   console.log(data, "data");
   screenRoomOptions.value = data.map((item: any) => ({
     ...item,
-    label: item.name,
+    label: item.name as string,
     value: item.id,
   }));
 };
-
-const initCinemaList = async () => {
-  const data = (await getCinemaListApi()) || [];
-  console.log(data, "data");
-  cinemaOptions.value = data.map((item: any) => ({
-    ...item,
-    label: item.name,
-    value: item.id,
-  }));
-};
-
-const initFilmList = async () => {
-  const data = (await getFilmListApi()) || [];
-  console.log(data, "data");
-  filmOptions.value = data.map((item: any) => ({
-    ...item,
-    label: item.title,
-    value: item.id,
-  }));
-  console.log(filmOptions.value, "filmOptions");
-};
-
-const changeDate = (): void => {};
 
 const handleAddSchedule = async (): Promise<void> => {
   if (!scheduleFormRef.value) return;
 
-  try {
-    await scheduleFormRef.value.validate();
-
-    const form = { ...scheduleForm };
-    const startTime = form.time[0];
-    const endTime = form.time[1];
-    const selectedDuration =
-      (new Date(endTime).getTime() - new Date(startTime).getTime()) /
-      (60 * 1000);
-
-    // // 验证逻辑
-    // if (startTime < releaseDate.value) {
-    //   ElMessage.error("影片的开始时间不能早于上映时间")
-    //   return
-    // }
-
-    if (new Date(startTime) <= new Date()) {
-      ElMessage.error("影片的开始时间不能早于当前时间");
-      return;
-    }
-
-    // if (Math.abs(selectedDuration - duration.value) > 1) { // 允许1分钟的误差
-    //   ElMessage.error(`影片的时长和选择的时间不一致，影片时长: ${duration.value}分钟，选择时长: ${selectedDuration}分钟`)
-    //   return
-    // }
-
-    form.startTime = startTime;
-    form.endTime = endTime;
-
-    if (props.type === "add") {
-      await addSchedule(form);
-      ElMessage.success("添加排片成功");
-    } else {
-      await updateSchedule(form);
-      ElMessage.success("修改排片成功");
-    }
-
-    cancel();
-  } catch (error) {
-    console.error("表单验证失败:", error);
+  await scheduleFormRef.value.validate();
+  const { startDateTime } = scheduleForm;
+  const { duration } = filmItem.value;
+  const startDate = dayjs(startDateTime);
+  console.log(duration, "duration");
+  const newValues = {
+    ...scheduleForm,
+    screeningDate: startDate.format("YYYY-MM-DD"),
+    startTime: startDate.format("HH:mm"),
+    endTime: startDate.add(duration, "minute").format("HH:mm"),
+  };
+  if (props.actionType === "add") {
+    await addScheduleApi(newValues);
+    ElMessage.success("添加排片成功");
+  } else {
+    await updateScheduleApi(newValues);
+    ElMessage.success("修改排片成功");
   }
+  emit("handleSuccess");
+  handleCancel();
 };
 
-const cancel = (): void => {
+const handleCancel = (): void => {
   emit("update:modelValue", false);
-  if (scheduleFormRef.value) {
-    scheduleFormRef.value.resetFields();
-  }
 };
 
 // 暴露方法给父组件

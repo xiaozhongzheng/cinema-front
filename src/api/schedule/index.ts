@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 
-export function addSchedule(data: any): Promise<any> {
+export function addScheduleApi(data: any): Promise<any> {
   return request({
     url: '/schedule/save',
     method: 'post',
@@ -8,9 +8,9 @@ export function addSchedule(data: any): Promise<any> {
   })
 }
 
-export function updateSchedule(data: any): Promise<any> {
+export function updateScheduleApi(data: any): Promise<any> {
   return request({
-    url: '/schedule',
+    url: '/schedule/edit',
     method: 'put',
     data
   })

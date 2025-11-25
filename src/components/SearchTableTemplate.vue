@@ -1,57 +1,88 @@
 <template>
   <div id="tableTemplate">
     <el-space alignment="start" wrap>
-      <el-form ref="searchFormRef" v-if="showSearchForm" :model="searchForm" :inline="true" size="default">
+      <el-form
+        ref="searchFormRef"
+        v-if="showSearchForm"
+        :model="searchForm"
+        :inline="true"
+        size="default"
+      >
         <template v-for="(item, index) in searchParamsList" :key="index">
           <el-form-item :label="item.label" :prop="item.prop">
             <template v-if="item.type === 'input'">
-              <el-input class="w180" v-model="searchForm[item.prop]" :placeholder="item.placeholder"
-                clearable></el-input>
+              <el-input
+                class="w180"
+                v-model="searchForm[item.prop]"
+                :placeholder="item.placeholder"
+                clearable
+                v-bind="item.attrs"
+              ></el-input>
             </template>
 
             <template v-if="item.type === 'select'">
-              <el-select v-model.trim="searchForm[item.prop]" :filterable="item.filterable" :multiple="item.multiple" :placeholder="item.placeholder" class="w180" :style="item.style"
-                :clearable="!item.clearable">
-                <el-option v-for="(option, optionIndex) in item.options" :key="optionIndex" :label="option.label"
-                  :value="option.value"></el-option>
+              <el-select
+                v-model.trim="searchForm[item.prop]"
+                class="w180"
+                clearable
+                v-bind="item.attrs"
+              >
+                <el-option
+                  v-for="(option, optionIndex) in item.options as OptionType[]"
+                  :key="optionIndex"
+                  :label="option.label"
+                  :value="option.value"
+                ></el-option>
               </el-select>
             </template>
 
-            <template v-if="item.type === 'datetime'">
-              <el-date-picker v-model="searchForm[item.prop]" class="w180" type="datetime" placeholder="选择日期"
-                value-format="yyyy-MM-dd"></el-date-picker>
-            </template>
-
-            <template v-if="item.type === 'date'">
-              <el-date-picker v-model="searchForm[item.prop]" class="w180" type="datetime" placeholder="选择日期"
-                value-format="yyyy-MM-dd"></el-date-picker>
+            <template v-if="item.type === 'time'">
+              <el-date-picker
+                v-model="searchForm[item.prop]"
+                class="w180"
+                type="date"
+                v-bind="item.attrs"
+              ></el-date-picker>
             </template>
 
             <template v-if="item.type === 'searchSlot'">
-              <slot name="searchSlot" :searchForm="searchForm" :itemProp="item.prop"></slot>
+              <slot
+                name="searchSlot"
+                :searchForm="searchForm"
+                :itemProp="item.prop"
+              ></slot>
             </template>
           </el-form-item>
-
         </template>
-        <el-space :style="{ marginBottom: '20px' }" alignment="start" wrap :size="20">
-          <el-button type="info" @click="pageQueryData">查询</el-button>
+        <el-space
+          :style="{ marginBottom: '20px' }"
+          alignment="start"
+          wrap
+          :size="20"
+        >
+          <el-button type="info" @click="pageQuery">查询</el-button>
           <el-button type="info" @click="reset">重置</el-button>
           <!-- 具名插槽，用于插入新增等功能的按钮 -->
           <slot name="handle"></slot>
         </el-space>
-
       </el-form>
     </el-space>
-    <el-table :max-height="800" :data="resultTableList">
+    <el-table :max-height="800" :data="resultTableList" v-bind="tableProps">
       <template v-for="item in tableParamsList" :key="item.prop">
-        <el-table-column :fixed="item.fixed" :width="item.width" :label="item.label" :prop="item.prop">
+        <el-table-column
+          :fixed="item?.fixed"
+          :width="item?.width"
+          :label="item?.label"
+          :prop="item?.prop"
+          :type="item?.type"
+        >
           <template v-if="item.renderText" #default="scope">
             <!-- 渲染文本 -->
             {{ item.renderText(scope.row[item.prop]) }}
           </template>
           <template v-else-if="item.render" #default="scope">
             <!-- 渲染DOM元素 -->
-            <component :is="item.render(scope.row[item.prop],scope.row)" />
+            <component :is="item.render!(scope.row[item.prop], scope.row)" />
           </template>
         </el-table-column>
       </template>
@@ -64,140 +95,150 @@
         </template>
       </el-table-column> -->
     </el-table>
-    <Pager :pageNo="pageParams.pager.pageNo" :pageSize="pageParams.pager.pageSize" :total="pageParams.total"
-      @changePageSize="handleSizeChange" @changePageNo="handleCurrentChange"></Pager>
+    <Pager
+      :pageNo="pageParams.pager.pageNo"
+      :pageSize="pageParams.pager.pageSize"
+      :total="pageParams.total"
+      @changePageSize="handleSizeChange"
+      @changePageNo="handleCurrentChange"
+    ></Pager>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, VNode, watch, defineProps, defineEmits, type Ref } from 'vue'
-import { debounce } from 'lodash-es'
-import Pager from '@/components/Pager.vue'
-import type { FormInstance } from 'element-plus'
+import {
+  ref,
+  reactive,
+  onMounted,
+  VNode,
+  defineProps,
+  defineEmits,
+  toRaw,
+  type ComputedRef,
+  type DefineComponent,
+} from "vue";
+import { debounce } from "lodash-es";
+import Pager from "@/components/Pager.vue";
+import type { FormInstance } from "element-plus";
+import type { TableProps } from "element-plus";
 
-// 类型定义
-interface Option {
-  label: string
-  value: string | number
+// 更精确的类型定义
+interface OptionType {
+  label: string;
+  value: any;
 }
 
 export interface SearchParamType {
-  label: string
-  prop: string
-  type: 'input' | 'select' | 'datetime' | 'date' | 'searchSlot'
-  placeholder?: string
-  filterable?: boolean
-  multiple?: boolean
-  style?: any
-  clearable?: boolean
-  options?: Option[]
+  label: string;
+  prop: string;
+  type: "input" | "select" | "time" | "searchSlot";
+  placeholder?: string;
+  style?: Record<string, any>;
+  // options 可以是普通数组或计算属性数组
+  options?: OptionType[] | ComputedRef<OptionType[]>;
+  // attrs 兼容任意额外属性（按需可进一步细化）
+  attrs?: Record<string, any>;
 }
 
 export interface TableParamType {
-  label: string
-  prop: string
-  width?: string | number,
-  fixed: 'right' | 'left' | '',
-  renderText?: (value: any) => string
-  render?: (value: any) => VNode
+  label?: string;
+  prop?: string;
+  width?: string | number;
+  fixed?: "right" | "left" | "";
+  type?: "selection" | "index" | "expand";
+
+  renderText?: (value: any, row?: Record<string, any>) => string;
+  render?: (
+    value: any,
+    row?: Record<string, any>
+  ) => VNode | DefineComponent | string | Record<string, any>;
 }
 
-interface Pager {
-  pageNo: number
-  pageSize: number
+export interface PagerType {
+  pageNo: number;
+  pageSize: number;
 }
 
-interface PageParams {
-  pager: Pager
-  total: number
+interface PageParamsType {
+  pager: PagerType;
+  total: number;
 }
 
 interface TableRow {
-  [key: string]: any
+  [key: string]: any;
 }
 
-// 定义 props
+// Props（更精确的泛型）
 const props = defineProps<{
-  tableParamsList: TableParamType[]
-  extraParams?: Record<string, any>
-  tableListApi?: (params: any) => Promise<any>
-  searchParamsList: SearchParamType[]
-  showSearchForm: boolean
-}>()
+  tableParamsList: TableParamType[];
+  tableProps?: TableProps<TableRow>;
+  extraParams?: Record<string, any>;
+  searchParamsList: SearchParamType[];
+  showSearchForm?: boolean;
+  getTableData: (
+    pageParams: PagerType,
+    searchParams: Record<string, any>
+  ) => Promise<{ data: TableRow[]; total: number }>;
+}>();
 
-// 定义 emits
+// Emits（签名风格）
 const emit = defineEmits<{
-  'update:extraParams': [value: Record<string, any>]
-}>()
+  "update:extraParams": (value: Record<string, any>) => void;
+}>();
 
 // 响应式数据
-const searchFormRef = ref<FormInstance>()
-const pageParams = reactive<PageParams>({
+const searchFormRef = ref<FormInstance | null>(null);
+const pageParams = reactive<PageParamsType>({
   pager: {
     pageNo: 1,
-    pageSize: 10
+    pageSize: 10,
   },
-  total: 0
-})
-const resultTableList = ref<TableRow[]>([])
-const searchForm = reactive<Record<string, any>>({})
+  total: 0,
+});
+const resultTableList = ref<TableRow[]>([]);
+const searchForm = reactive<Record<string, any>>({});
 
-
-// 分页查询数据
-const pageQueryData = debounce((): void => {
-  if (!props.tableListApi) return
-
-  props.tableListApi({
-    ...props.extraParams,
-    ...pageParams.pager,
-    ...searchForm
-  }).then((res: any) => {
-    resultTableList.value = res.records
-    pageParams.total = res.total
-  })
-}, 300)
-
-// 处理分页大小变化
+// 分页处理
 const handleSizeChange = (val: number): void => {
-  pageParams.pager.pageSize = val
-  pageQueryData()
-}
+  pageParams.pager.pageSize = val;
+  pageQuery();
+};
 
-// 处理当前页码变化
 const handleCurrentChange = (val: number): void => {
-  pageParams.pager.pageNo = val
-  pageQueryData()
-}
+  pageParams.pager.pageNo = val;
+  pageQuery();
+};
 
-// 重置表单
 const reset = (): void => {
   if (searchFormRef.value) {
-    searchFormRef.value.resetFields()
+    searchFormRef.value.resetFields();
   }
-  pageParams.pager.pageNo = 1
-  pageParams.pager.pageSize = 10
-  pageQueryData()
-}
+  pageParams.pager = {
+    pageNo: 1,
+    pageSize: 10,
+  };
+  pageQuery();
+};
 
-// 暴露方法给父组件
-defineExpose({
-  pageQueryData,
-  reset
-})
-
-// 生命周期
 onMounted(() => {
-  pageQueryData()
-})
+  pageQuery();
+});
 
-// 监听 extraParams 变化
-watch(
-  () => props.extraParams,
-  () => {
-    pageQueryData()
-  },
-  { deep: true }
-)
+const pageQuery = debounce(async () => {
+  const res = await props.getTableData(
+    { ...pageParams.pager },
+    toRaw(searchForm)
+  );
+  resultTableList.value = res?.data ?? [];
+  pageParams.total = res?.total ?? 0;
+}, 300);
+
+// 对外暴露
+defineExpose({
+  reset,
+  searchForm,
+  pageQuery,
+});
 </script>
 
 <style scoped>

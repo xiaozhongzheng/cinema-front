@@ -2,12 +2,11 @@
   <div id="screen_room">
     <SearchTableTemplate
       ref="searchTableTemplateRef"
-      v-if="pageQueryApi"
-      :table-list-api="pageQueryApi"
       :extra-params="extraParams"
       :table-params-list="tableParamsList"
       :search-params-list="searchParamsList"
       :show-search-form="showSearchForm"
+      :getTableData="getTableData"
     >
       <template #handle>
         <el-button
@@ -31,7 +30,7 @@ import { ref, reactive, onMounted, h } from "vue";
 import { ElMessage, ElMessageBox,ElButton } from "element-plus";
 import EditCinemaForm from "./components/EditCinemaForm.vue";
 import { deleteCinemaApi, pageQueryCinemaApi } from "@/api/cinema";
-import { SearchParamType, TableParamType } from "@/components/SearchTableTemplate.vue";
+import { PagerType, SearchParamType, TableParamType } from "@/components/SearchTableTemplate.vue";
 import { provinceOptions } from "@/utils/area";
 import { CinemaFormType } from "@/api/cinema/type";
 
@@ -120,7 +119,6 @@ const tableParamsList = ref<TableParamType[]>([
 ]);
 
 const extraParams = ref({});
-const pageQueryApi = ref(null);
 const showSearchForm = ref(true);
 
 const searchParamsList = ref([
@@ -139,10 +137,18 @@ const searchParamsList = ref([
   },
 ]) as SearchParamType[];
 
-// 生命周期
-onMounted(() => {
-  pageQueryApi.value = pageQueryCinemaApi;
-});
+const getTableData = async (pageParams: PagerType, searchParams: Record<string,any>) => {
+
+  const res = await pageQueryCinemaApi({
+    ...pageParams,
+    ...searchParams,
+  });
+
+  return {
+    data: res.records,
+    total: res.total
+  }
+};
 
 // 方法
 const showAddForm = () => {
@@ -159,7 +165,7 @@ const showUpdateForm = async (row: any) => {
 };
 
 const reloadData = () => {
-  searchTableTemplateRef.value.pageQueryData();
+  searchTableTemplateRef.value.pageQuery();
 };
 
 const handleDelete = async (row: any) => {
