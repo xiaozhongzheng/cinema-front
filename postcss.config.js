@@ -1,11 +1,18 @@
 module.exports = {
-  // 对于不想转化rem的可以使用大写的PX
   plugins: {
     'postcss-pxtorem': {
       rootValue: 10,
       propList: ['*'],               // 需要转换的属性，*表示全部
-      // selectorBlackList: ['.no-rem'], // 不转换的选择器（添加.no-rem类名的元素不转换）
-      minPixelValue: 12               // 小于12px不转换
+     selectorBlackList: [
+        // 忽略 UI 框架
+        '.el-',        // Element Plus
+        // 忽略特定功能类
+        '.ignore-',
+        '.no-rem',
+      ],
+      minPixelValue: 12,               // 小于12px不转换
+      mediaQuery: false,                // 是否转换媒体查询中的px
+
     }
   }
 }

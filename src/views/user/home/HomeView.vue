@@ -61,10 +61,10 @@ const router = useRouter();
 
 // 响应式数据
 const urlArr = ref([
-  new URL("@/assets/images/lun01.jpg", import.meta.url).href,
+  new URL("@/assets/images/lun04.png", import.meta.url).href,
+  new URL("@/assets/images/lun05.jpg", import.meta.url).href,
   new URL("@/assets/images/lun02.jpg", import.meta.url).href,
   new URL("@/assets/images/lun03.jpg", import.meta.url).href,
-  new URL("@/assets/images/lun01.jpg", import.meta.url).href,
   new URL("@/assets/images/lun02.jpg", import.meta.url).href,
   new URL("@/assets/images/lun03.jpg", import.meta.url).href,
 ]);

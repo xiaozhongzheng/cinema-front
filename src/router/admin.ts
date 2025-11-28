@@ -54,7 +54,7 @@ export const adminRoutes = {
       meta: {
         // 路由元信息 用于存储数据的
         title: '排片管理', // 标题
-        icon: 'Menu' // 图标
+        icon: 'Aim' // 图标
       }
     },
     // {

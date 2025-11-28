@@ -1,3 +1,4 @@
+import { ScheduleStatus } from "@/api/schedule/type";
 
 export const filmTypeList = ["动作", "动画", "喜剧", "犯罪", "爱情", "科幻", "其他"];
 export const filmRegionList = ["内地", "香港", "台湾", "日本", "美国", "其他"];
@@ -17,10 +18,10 @@ export const filmStatusOptions = [
 ]
 
 export const shceduleStatusOptions = [
-  {label: '已取消',value: 0,type:'warning'},
-  {label: '未发布',value: 1},
-  {label: '已发布',value: 2,type: 'success'},
-  {label: '已结束',value: 3,type: 'danger'}
+  {label: '已取消',value: ScheduleStatus.Canceled,type:'warning'},
+  {label: '未发布',value: ScheduleStatus.Unpubilshed,},
+  {label: '已发布',value: ScheduleStatus.Published,type: 'success'},
+  {label: '已结束',value: ScheduleStatus.Expired,type: 'danger'}
 ]
 
 export const host = 'localhost'
