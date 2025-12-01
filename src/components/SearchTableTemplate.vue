@@ -1,19 +1,20 @@
 <template>
   <div id="tableTemplate">
-    <el-space alignment="start" wrap>
+    <el-space wrap>
       <el-form
         ref="searchFormRef"
         v-if="showSearchForm"
-        :model="searchForm"
+        :model="searchParamsForm"
         :inline="true"
         size="default"
+        label-width="auto"
       >
         <template v-for="(item, index) in searchParamsList" :key="index">
           <el-form-item :label="item.label" :prop="item.prop">
             <template v-if="item.type === 'input'">
               <el-input
                 class="w180"
-                v-model="searchForm[item.prop]"
+                v-model="searchParamsForm[item.prop]"
                 :placeholder="item.placeholder"
                 clearable
                 v-bind="item.attrs"
@@ -22,7 +23,7 @@
 
             <template v-if="item.type === 'select'">
               <el-select
-                v-model.trim="searchForm[item.prop]"
+                v-model.trim="searchParamsForm[item.prop]"
                 class="w180"
                 clearable
                 v-bind="item.attrs"
@@ -38,7 +39,7 @@
 
             <template v-if="item.type === 'time'">
               <el-date-picker
-                v-model="searchForm[item.prop]"
+                v-model="searchParamsForm[item.prop]"
                 class="w180"
                 type="date"
                 v-bind="item.attrs"
@@ -48,41 +49,43 @@
             <template v-if="item.type === 'searchSlot'">
               <slot
                 name="searchSlot"
-                :searchForm="searchForm"
+                :searchParamsForm="searchParamsForm"
                 :itemProp="item.prop"
               ></slot>
             </template>
           </el-form-item>
         </template>
-        <el-space
-          :style="{ marginBottom: '20px' }"
-          alignment="start"
-          wrap
-          :size="20"
-        >
-          <el-button type="info" @click="pageQuery">查询</el-button>
-          <el-button type="info" @click="reset">重置</el-button>
-          <!-- 具名插槽，用于插入新增等功能的按钮 -->
-          <slot name="handle"></slot>
-        </el-space>
       </el-form>
     </el-space>
-    <el-table :max-height="800" :data="resultTableList" v-bind="tableProps">
+    <div class="buttonArea">
+      <!-- 具名插槽，用于插入新增等功能的按钮 -->
+      <div class="btns">
+        <slot name="handle"></slot>
+      </div>
+      <div class="btns">
+        <el-button type="info" @click="pageQuery">查询</el-button>
+        <el-button type="info" @click="reset">重置</el-button>
+      </div>
+    </div>
+    <el-table v-bind="tableProps" :max-height="800" :data="resultTableList">
       <template v-for="item in tableParamsList" :key="item.prop">
         <el-table-column
           :fixed="item?.fixed"
-          :width="item?.width"
+          :width="item.width"
           :label="item?.label"
           :prop="item?.prop"
           :type="item?.type"
+          v-bind="item?.attrs"
         >
-          <template v-if="item.renderText" #default="scope">
-            <!-- 渲染文本 -->
-            {{ item.renderText(scope.row[item.prop]) }}
-          </template>
-          <template v-else-if="item.render" #default="scope">
-            <!-- 渲染DOM元素 -->
-            <component :is="item.render!(scope.row[item.prop], scope.row)" />
+          <template #default="scope">
+            <div v-if="item.renderText">
+              <!-- 渲染文本 -->
+              {{ item.renderText(scope.row[item.prop]) }}
+            </div>
+            <div v-else-if="item.render">
+              <!-- 渲染DOM元素 -->
+              <component :is="item.render!(scope.row[item.prop], scope.row)" />
+            </div>
           </template>
         </el-table-column>
       </template>
@@ -143,15 +146,15 @@ export interface SearchParamType {
 export interface TableParamType {
   label?: string;
   prop?: string;
-  width?: string | number;
+  width?: number;
   fixed?: "right" | "left" | "";
   type?: "selection" | "index" | "expand";
-
   renderText?: (value: any, row?: Record<string, any>) => string;
   render?: (
     value: any,
     row?: Record<string, any>
   ) => VNode | DefineComponent | string | Record<string, any>;
+  attrs?: Record<string, any>;
 }
 
 export interface PagerType {
@@ -195,8 +198,8 @@ const pageParams = reactive<PageParamsType>({
   },
   total: 0,
 });
-const resultTableList = ref<TableRow[]>([]);
-const searchForm = reactive<Record<string, any>>({});
+const resultTableList = reactive<TableRow[]>([]);
+const searchParamsForm = reactive<Record<string, any>>({});
 
 // 分页处理
 const handleSizeChange = (val: number): void => {
@@ -227,22 +230,33 @@ onMounted(() => {
 const pageQuery = debounce(async () => {
   const res = await props.getTableData(
     { ...pageParams.pager },
-    toRaw(searchForm)
+    toRaw(searchParamsForm) // 解除响应式
   );
-  resultTableList.value = res?.data ?? [];
+  console.log(res, "res**");
+  resultTableList.splice(0, resultTableList.length);
+  Object.assign(resultTableList, res?.data || []);
   pageParams.total = res?.total ?? 0;
 }, 300);
 
 // 对外暴露
 defineExpose({
-  reset,
-  searchForm,
-  pageQuery,
+  searchParamsForm, // 查询参数
+  pageQuery, // 分页查询方法
 });
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .w180 {
   width: 180px;
+}
+.buttonArea {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  .btns {
+    display: flex;
+    flex-wrap: wrap;
+  }
 }
 </style>

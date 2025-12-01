@@ -28,7 +28,7 @@
             placeholder="请输入要查询的电影名"
             class="search"
           ></el-input>
-          <el-button type="success" @click="dialogVisible = true">充值</el-button>
+          <el-button type="success" @click="goAdminPage">去后台</el-button>
 
           <div class="right">
             <template v-if="user.username">
@@ -67,31 +67,6 @@
         </div>
       </el-header>
 
-      <el-dialog title="充值" v-model="dialogVisible" width="30%" @close="resetMoney">
-        <div>
-          <el-radio-group v-model="money">
-            <el-radio
-              :label="item"
-              border
-              v-for="item in moneyArr"
-              :key="item"
-              style="width: 150px; margin: 20px"
-            >
-              {{ item }} 元
-            </el-radio>
-          </el-radio-group>
-          优惠：
-          <span style="color: rgb(194, 199, 213)"
-            >一次性充值1000元的用户享八折优惠，充值400元以上的享九折优惠，充值200元以上的享九五折优惠</span
-          >
-        </div>
-        <template #footer>
-          <span class="dialog-footer">
-            <el-button @click="dialogVisible = false">取 消</el-button>
-            <el-button type="primary" @click="recharge()">充 值</el-button>
-          </span>
-        </template>
-      </el-dialog>
 
       <div class="emptyBox"></div>
       <el-main>
@@ -141,9 +116,6 @@ const menuList = ref([
 const activeIndex = ref(0);
 const title = ref("");
 const indexPath = ref("");
-const dialogVisible = ref(false);
-const money = ref("");
-const moneyArr = ref([50, 100, 200, 300, 400, 500, 1000]);
 const user = ref({
   username: "",
   avatar: "",
@@ -151,22 +123,6 @@ const user = ref({
 });
 const showView = ref(false);
 
-// 计算属性
-const getDiscount = computed(() => {
-  const userDiscount = user.value.discount || 1;
-  const m = money.value;
-  let discount = 1;
-
-  if (m >= 1000) {
-    discount = 0.8;
-  } else if (m >= 400) {
-    discount = 0.9;
-  } else if (m >= 200) {
-    discount = 0.95;
-  }
-
-  return discount < userDiscount ? discount : userDiscount;
-});
 
 // 生命周期钩子
 onMounted(() => {
@@ -224,19 +180,7 @@ const logout = async (data: any) => {
   router.push("/user/home");
 };
 
-const recharge = async () => {
-  await rechargeApi({
-    money: money.value,
-    discount: getDiscount.value,
-  });
-  ElMessage.success("充值成功");
-  resetMoney();
-};
 
-const resetMoney = () => {
-  money.value = "";
-  dialogVisible.value = false;
-};
 
 const toShowMovies = () => {
   if (indexPath.value !== "/user/movies") {
@@ -245,6 +189,9 @@ const toShowMovies = () => {
     });
   }
 };
+const goAdminPage = () => {
+  router.push("/admin")
+}
 </script>
 
 <style scoped lang="scss">
