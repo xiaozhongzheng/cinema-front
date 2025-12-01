@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
 import pxtorem from 'postcss-pxtorem'
-// test03-vite配置
+// master03-vite配置
 export default defineConfig({
   plugins: [vue()],
   resolve: {
