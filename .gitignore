@@ -55,3 +55,7 @@ Thumbs.db
 # Optional: local OS or tool-specific files
 /.idea/
 .vscode/
+src/views/user/home/HomeView_BASE_2331.vue
+src/views/user/home/HomeView_BACKUP_2331.vue
+src/views/user/home/HomeView_LOCAL_2331.vue
+src/views/user/home/HomeView_REMOTE_2331.vue
