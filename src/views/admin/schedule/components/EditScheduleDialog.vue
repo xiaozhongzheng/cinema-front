@@ -35,6 +35,7 @@
             v-model="scheduleForm.screenRoomId"
             placeholder="请选择放映厅"
             filterable
+            clearable
           >
             <el-option
               v-for="item in screenRoomOptions"
@@ -84,9 +85,9 @@
           ></el-input>
         </el-form-item>
 
-        <el-form-item label="开始日期" prop="startDateTime" class="w80">
+        <el-form-item label="开始日期" prop="startTime" class="w80">
           <el-date-picker
-            v-model="scheduleForm.startDateTime"
+            v-model="scheduleForm.startTime"
             type="datetime"
             placeholder="选择开始日期"
             format="YYYY-MM-DD HH:mm"
@@ -111,10 +112,9 @@ import {
   reactive,
   watch,
   nextTick,
-  type FormInstance,
   onMounted,
 } from "vue";
-import { ElMessage } from "element-plus";
+import { ElMessage, FormInstance } from "element-plus";
 import { getScreenRoomListApi, getScreensByCinemaIdApi } from "@/api/screen";
 import { languageList } from "@/utils/constant";
 import { ScheduleActionType } from "../index.vue";
@@ -136,8 +136,6 @@ const props = withDefaults(defineProps<Props>(), {
   modelValue: false,
   actionType: "add",
   schedule: null,
-  filmOptions: [],
-  cinemaOptions: [],
 });
 
 // Emits 定义
@@ -145,11 +143,11 @@ const emit = defineEmits(["handleSuccess", "update:modelValue"]);
 
 const scheduleFormRef = ref<FormInstance>();
 const screenRoomOptions = ref<OptionsType[]>([]);
-const filmItem = ref<FilmResultType>({});
-const scheduleForm = reactive<ScheduleFormType>({});
+const filmItem = ref<FilmResultType | null>(null);
+const scheduleForm = reactive<ScheduleFormType>({} as any);
 const validateDateTime = (rule: any, value: any, callback: any) => {
   const curTimestamp = new Date(value).getTime();
-  const releaseDateTimestamp = new Date(filmItem.value.releaseDate).getTime();
+  const releaseDateTimestamp = new Date(filmItem.value!.releaseDate).getTime();
   console.log(curTimestamp, releaseDateTimestamp, "releaseDateTimestamp");
   if (releaseDateTimestamp >= curTimestamp) {
     callback(new Error("影片开始时间不能早于上映时间"));
@@ -179,7 +177,7 @@ const rules = {
       },
     },
   ],
-  startDateTime: [
+  startTime: [
     { required: true, message: "请选择时间" },
     { validator: validateDateTime },
   ],
@@ -192,22 +190,26 @@ const initEditData = () => {
   console.log(props.schedule, "props.schedule");
   Object.assign(scheduleForm, props.schedule);
   const { cinemaId, filmId } = { ...props.schedule };
-  cinemaId && handleCinemaChange(cinemaId);
+  cinemaId && handleCinemaChange(cinemaId,true);
   filmId && handleFilmChange(filmId);
 };
 const handleFilmChange = (id: number) => {
   console.log(id, "film id");
   filmItem.value = props.filmOptions.find(
-    (item: FilmResultType) => item.id === id
-  );
+    (item: any) => item.id === id
+  ) as any;
   console.log(filmItem.value, "filmItem.value");
 };
 const handlePrice = (val: string) => {
   if (!val) return;
   scheduleForm.price = Number(val);
 };
-const handleCinemaChange = async (id: number) => {
-  if(!id) return
+const handleCinemaChange = async (id: number,isFirst = false) => {
+  !isFirst && scheduleForm.screenRoomId && Object.assign(scheduleForm,{...scheduleForm,screenRoomId: undefined})
+  if(!id) {
+    screenRoomOptions.value = []
+    return
+  }
   const data = (await getScreensByCinemaIdApi(id)) || [];
   console.log(data, "data");
   screenRoomOptions.value = data.map((item: any) => ({
@@ -221,15 +223,16 @@ const handleAddSchedule = async (): Promise<void> => {
   if (!scheduleFormRef.value) return;
 
   await scheduleFormRef.value.validate();
-  const { startDateTime } = scheduleForm;
-  const { duration } = filmItem.value;
-  const startDate = dayjs(startDateTime);
+  const { startTime } = scheduleForm;
+  const { duration } = filmItem.value!;
+  const startDate = dayjs(startTime);
   console.log(duration, "duration");
+  const formatStr = "YYYY-MM-DD HH:mm:ss"
   const newValues = {
     ...scheduleForm,
     screeningDate: startDate.format("YYYY-MM-DD"),
-    startTime: startDate.format("HH:mm"),
-    endTime: startDate.add(duration, "minute").format("HH:mm"),
+    startTime: dayjs(startTime).format(formatStr),
+    endTime: dayjs(startTime).add(duration, "minute").format(formatStr),
   };
   if (props.actionType === "add") {
     await addScheduleApi(newValues);

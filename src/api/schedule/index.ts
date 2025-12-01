@@ -16,6 +16,14 @@ export function updateScheduleApi(data: any): Promise<any> {
   })
 }
 
+export function updateScheduleStatusApi(data: any): Promise<any> {
+  return request({
+    url: '/schedule/edit/status',
+    method: 'put',
+    data
+  })
+}
+
 export function pageQueryScheduleApi(params: any): Promise<any> {
   return request({
     url: '/schedule/page',
