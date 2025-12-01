@@ -3,11 +3,19 @@
     <el-carousel
       indicator-position="outside"
       :interval="3000"
+      :autoplay="false"
       class="carouselBox"
       type="card"
+      height="35rem"
+      ref="carouselRef"
     >
-      <el-carousel-item v-for="url in urlArr" :key="url">
-        <el-image class="img" :src="url" fit="cover"></el-image>
+      <el-carousel-item
+        v-for="(url, index) in urlArr"
+        :key="url"
+        class="carouselItem"
+        @click="demo(url, index)"
+      >
+        <el-image class="carouselImg" :src="url" fit="cover"></el-image>
       </el-carousel-item>
     </el-carousel>
 
@@ -61,24 +69,32 @@ const router = useRouter();
 
 // 响应式数据
 const urlArr = ref([
-  new URL("@/assets/images/lun01.jpg", import.meta.url).href,
+  new URL("@/assets/images/lun04.png", import.meta.url).href,
+  new URL("@/assets/images/lun05.png", import.meta.url).href,
+  new URL("@/assets/images/lun06.png", import.meta.url).href,
+  new URL("@/assets/images/lun07.png", import.meta.url).href,
   new URL("@/assets/images/lun02.jpg", import.meta.url).href,
-  new URL("@/assets/images/lun03.jpg", import.meta.url).href,
-  new URL("@/assets/images/lun01.jpg", import.meta.url).href,
-  new URL("@/assets/images/lun02.jpg", import.meta.url).href,
-  new URL("@/assets/images/lun03.jpg", import.meta.url).href,
+  new URL("@/assets/images/lun06.png", import.meta.url).href,
 ]);
 const hotfilmList = ref([]);
 const upcomingList = ref([]);
 const topfilmList = ref([]);
 const num = ref(6);
 const top1Icon = ref(new URL("@/assets/images/top1.png", import.meta.url).href);
-
+const carouselRef = ref(null);
 // 方法
 const toShowAllFilm = () => {
   router.push({
     name: "movies",
   });
+};
+const demo = (item, index) => {
+  const curIndex = carouselRef?.value.activeIndex;
+  console.log(item, curIndex, index, "curIndex");
+};
+
+const handleCarouselClick = (e) => {
+  console.log(e, "val");
 };
 
 const getFilmes = async () => {
@@ -118,30 +134,38 @@ onMounted(() => {
 });
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 .main {
   box-sizing: border-box;
-  width: 100%;
   max-width: 1200px;
+  min-width: 1000px;
   display: flex;
   flex-direction: column;
   gap: 20px;
   margin: auto;
 
   .carouselBox {
-    min-width: 1000px;
-    // height: 500px;
+    :deep(.el-carousel__arrow) {
+      color: #000;
+      background-color: #fff;
+      opacity: 0.8;
+      font-size: 16px;
+    }
 
-    .img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+    /* 控制中间卡片的宽度 */
+    .carouselItem {
+      .carouselImg {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
     }
   }
 
   .container {
     display: flex;
     gap: 30px;
+
     .leftBox {
       // width: 800px;
       display: flex;
@@ -240,20 +264,5 @@ onMounted(() => {
       }
     }
   }
-}
-.el-carousel__item h3 {
-  color: #475669;
-  opacity: 0.75;
-  line-height: 200px;
-  margin: 0;
-  text-align: center;
-}
-
-.el-carousel__item:nth-child(2n) {
-  background-color: #99a9bf;
-}
-
-.el-carousel__item:nth-child(2n + 1) {
-  background-color: #d3dce6;
 }
 </style>
