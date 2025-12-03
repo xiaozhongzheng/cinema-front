@@ -76,7 +76,7 @@
       </el-form-item>
 
       <el-form-item label="图片" prop="poster">
-        <UploadImage v-model="filmForm.poster" />
+        <UploadImage :width="400" v-model="filmForm.poster" />
       </el-form-item>
 
       <el-form-item class="w80" label="简介" prop="plot">

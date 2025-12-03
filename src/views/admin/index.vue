@@ -28,7 +28,11 @@
           :router="true"
           :collapse="isCollapse"
         >
-          <side-bar-item v-for="route in routes" :key="route.path" :route="route" />
+          <SideBarItem
+            v-for="route in routes"
+            :key="route.path"
+            :route="route"
+          />
         </el-menu>
       </aside>
 
@@ -44,12 +48,13 @@
               @click="showSidebar = !showSidebar"
               v-if="isMobile"
             />
+            <div class="metaNameClass">{{ metaName }}</div>
 
             <!-- 系统信息（Flex 项目） -->
-            <div class="system-info">
+            <!-- <div class="system-info">
               <el-avatar shape="square" :size="50" fit="fill" :src="logoUrl" />
-              <span class="system-name"> 影院管理系统-{{ roleText }} </span>
-            </div>
+              <span class="system-name"> 影院管理系统</span>
+            </div> -->
 
             <!-- 用户操作区（Flex 项目，靠右） -->
             <div class="user-actions">
@@ -102,6 +107,7 @@ import {
 import MyCenterDialog from "./components/MyCenterDialog.vue";
 import SideBarItem from "./components/SideBarItem.vue";
 import { useUserStore } from "@/stores";
+import { adminSystemTitle } from "@/utils/constant";
 
 // 类型定义
 interface RouteRecord {
@@ -125,9 +131,18 @@ const screenWidth = ref<number>(window.innerWidth);
 const mobileBreakpoint = 768;
 
 // 计算属性
-const routes = computed((): RouteRecord[] => {
+const routes = computed((): any => {
   return router.options.routes;
 });
+const metaName = computed(() => {
+  const { children = [] } = routes.value[5];
+  const { meta = {} } = children.find(
+    (item: any) => item.path === currentPath.value
+  );
+  return meta.title || "";
+});
+
+console.log(routes.value[5], "routes");
 
 const isMobile = computed((): boolean => {
   return screenWidth.value < mobileBreakpoint;
@@ -137,15 +152,9 @@ const username = computed((): string => {
   return userStore.userInfo?.username || "";
 });
 
-const roleId = computed((): number => {
-  return userStore.roleId || 0;
-});
-
-const roleText = computed((): string => {
-  return roleId.value === 2 ? "管理员" : "员工";
-});
-
-const logoUrl = ref<string>(new URL("@/assets/images/logo.png", import.meta.url).href);
+const logoUrl = ref<string>(
+  new URL("@/assets/images/logo.png", import.meta.url).href
+);
 
 // 监听器
 watch(
@@ -161,6 +170,7 @@ watch(screenWidth, () => {
 
 // 生命周期
 onMounted(() => {
+  document.title = adminSystemTitle;
   window.addEventListener("resize", handleResize);
   handleResponsive();
 });
@@ -190,8 +200,7 @@ const toggleCollapse = (): void => {
 const logout = async (): Promise<void> => {
   try {
     await userStore.logoutAction({
-      roleId: userStore.roleId,
-      userId: userStore.userId,
+      // userId: userStore.userId,
     });
     ElMessage.success("退出成功");
     router.push("/login");
@@ -325,7 +334,10 @@ $sidebar-bg: #545c64;
     left: 15px;
     z-index: 20;
   }
-
+  .metaNameClass {
+    font-size: 24px;
+    font-weight: 600;
+  }
   // 系统信息（Flex 容器：横向排列）
   .system-info {
     display: flex;
@@ -359,8 +371,7 @@ $sidebar-bg: #545c64;
 .page-content {
   flex: 1; // 占满剩余高度
   background-color: $bg-color;
-  padding: 20px;
-  overflow-y: auto; // 内容超出时滚动
+  padding: 30px;
 }
 
 // 响应式调整

@@ -1,5 +1,13 @@
 import request from '@/utils/request'
 
+export function pageQueryUserApi(params: any): Promise<any> {
+  return request({
+    url: '/user/page',
+    method: 'get',
+    params
+  })
+}
+
 export function register(data: any): Promise<any> {
   return request({
     url: '/user/register',
@@ -15,9 +23,9 @@ export function getUserById(id: number): Promise<any> {
   })
 }
 
-export function updateUserById(id: number, data: any): Promise<any> {
+export function updateUserApi( data: any): Promise<any> {
   return request({
-    url: `/user/${id}`,
+    url: `/user/edit`,
     method: 'put',
     data
   })

@@ -1,6 +1,6 @@
 <template>
   <div id="tableTemplate">
-    <el-space wrap>
+    <div class="searchArea">
       <el-form
         ref="searchFormRef"
         v-if="showSearchForm"
@@ -56,17 +56,18 @@
           </el-form-item>
         </template>
       </el-form>
-    </el-space>
-    <div class="buttonArea">
-      <!-- 具名插槽，用于插入新增等功能的按钮 -->
-      <div class="btns">
-        <slot name="handle"></slot>
-      </div>
-      <div class="btns">
-        <el-button type="info" @click="pageQuery">查询</el-button>
-        <el-button type="info" @click="reset">重置</el-button>
+      <div class="buttonArea">
+        <!-- 具名插槽，用于插入新增等功能的按钮 -->
+        <div class="btns">
+          <slot name="handle"></slot>
+        </div>
+        <div class="btns">
+          <el-button type="info" @click="pageQuery">查询</el-button>
+          <el-button type="info" @click="reset">重置</el-button>
+        </div>
       </div>
     </div>
+
     <el-table v-bind="tableProps" :max-height="800" :data="resultTableList">
       <template v-for="item in tableParamsList" :key="item.prop">
         <el-table-column
@@ -149,9 +150,9 @@ export interface TableParamType {
   width?: number;
   fixed?: "right" | "left" | "";
   type?: "selection" | "index" | "expand";
-  renderText?: (value: any, row?: Record<string, any>) => string;
+  renderText?: (value?: any, row?: Record<string, any>) => any;
   render?: (
-    value: any,
+    value?: any,
     row?: Record<string, any>
   ) => VNode | DefineComponent | string | Record<string, any>;
   attrs?: Record<string, any>;
@@ -246,17 +247,27 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
-.w180 {
-  width: 180px;
-}
-.buttonArea {
-  margin-bottom: 20px;
+#tableTemplate {
+  // display: inline-block;
   display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  .btns {
+  flex-direction: column;
+  gap: 20px;
+  .searchArea {
+    background-color: #fff;
+    padding: 20px;
+  }
+  .w180 {
+    width: 180px;
+  }
+  .buttonArea {
     display: flex;
+    justify-content: space-between;
     flex-wrap: wrap;
+    margin-top: 8px;
+    .btns {
+      display: flex;
+      flex-wrap: wrap;
+    }
   }
 }
 </style>

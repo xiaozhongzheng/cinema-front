@@ -4,7 +4,12 @@
       <el-header class="navBar">
         <div class="head">
           <div class="title">
-            <el-avatar shape="square" :size="50" fit="fill" :src="url"></el-avatar>
+            <el-avatar
+              shape="square"
+              :size="50"
+              fit="fill"
+              :src="url"
+            ></el-avatar>
             <span> 影院购票界面</span>
           </div>
           <el-menu
@@ -32,7 +37,10 @@
 
           <div class="right">
             <template v-if="user.username">
-              <el-avatar v-if="user && user.avatar" :src="user.avatar"></el-avatar>
+              <el-avatar
+                v-if="user && user.avatar"
+                :src="user.avatar"
+              ></el-avatar>
               <el-avatar :src="userDefault" v-else></el-avatar>
             </template>
 
@@ -43,7 +51,10 @@
               </span>
               <template #dropdown>
                 <el-dropdown-menu v-if="user.username">
-                  <el-dropdown-item command="/user/me/cart" :icon="ShoppingCart">
+                  <el-dropdown-item
+                    command="/user/me/cart"
+                    :icon="ShoppingCart"
+                  >
                     我的购物车
                   </el-dropdown-item>
                   <el-dropdown-item command="/user/me/order" :icon="Document">
@@ -66,7 +77,6 @@
           </div>
         </div>
       </el-header>
-
 
       <div class="emptyBox"></div>
       <el-main>
@@ -98,6 +108,7 @@ import {
   ArrowDown,
   SwitchButton,
 } from "@element-plus/icons-vue";
+import { userSystemTitle } from "@/utils/constant";
 // 路由和状态管理
 const route = useRoute();
 const router = useRouter();
@@ -123,9 +134,9 @@ const user = ref({
 });
 const showView = ref(false);
 
-
 // 生命周期钩子
 onMounted(() => {
+  document.title = userSystemTitle
   indexPath.value = route.path;
   user.value = userStore.userInfo;
   console.log(userStore.userInfo, "userStore.userInfo;");
@@ -180,8 +191,6 @@ const logout = async (data: any) => {
   router.push("/user/home");
 };
 
-
-
 const toShowMovies = () => {
   if (indexPath.value !== "/user/movies") {
     router.push({
@@ -190,8 +199,17 @@ const toShowMovies = () => {
   }
 };
 const goAdminPage = () => {
-  router.push("/admin")
-}
+  // router.push("/admin");
+  // 新建标签页跳转方法
+
+  const routeUrl = router.resolve({
+    path: "/admin", // 目标路由路径（如：/user/detail）
+    query: { id: 123, name: "test" }, // 拼接在 URL 上的参数（可选）
+  });
+
+  // 2. 新建标签页打开解析后的 URL
+  window.open(routeUrl.href, "_blank");
+};
 </script>
 
 <style scoped lang="scss">
