@@ -1,5 +1,6 @@
 import { ScheduleStatus } from "@/api/schedule/type";
-
+export const userSystemTitle = "影片购票中心"
+export const adminSystemTitle = "影片管理后台"
 export const filmTypeList = ["动作", "动画", "喜剧", "犯罪", "爱情", "科幻", "其他"];
 export const filmRegionList = ["内地", "香港", "台湾", "日本", "美国", "其他"];
 export const languageList = ['国语', '英语', '粤语', '其他']
@@ -27,8 +28,20 @@ export const shceduleStatusOptions = [
 export const host = 'localhost'
 // const host = '47.96.128.212'
 
-export const userRoleList = ['', '员工', '管理员']
-export const accountStatusList = ['禁用', '启用']
+export const userRoleOptions = [
+  {label: '用户',value: 0},
+  {label: '管理员',value: 1}
+]
+export const accountStatusOptions = [
+      {
+        label: "启用",
+        value: 1,
+      },
+      {
+        label: "禁用",
+        value: 0,
+      },
+    ]
 export const rolePathList = ['/user', '/employee', '/admin']
 export const payStatus = ['已取消', '已支付', '已完成']
 

@@ -30,14 +30,14 @@ import { ref, reactive, onMounted, h } from "vue";
 import { ElMessage, ElMessageBox,ElButton } from "element-plus";
 import EditCinemaForm from "./components/EditCinemaForm.vue";
 import { deleteCinemaApi, pageQueryCinemaApi } from "@/api/cinema";
-import { PagerType, SearchParamType, TableParamType } from "@/components/SearchTableTemplate.vue";
+import SearchTableTemplate, { PagerType, SearchParamType, TableParamType } from "@/components/SearchTableTemplate.vue";
 import { provinceOptions } from "@/utils/area";
 import { CinemaFormType } from "@/api/cinema/type";
 
 // 响应式数据
 const showEditDialog = ref(false);
-const searchTableTemplateRef = ref(null);
-const currentRow = ref(null);
+const searchTableTemplateRef = ref<typeof SearchTableTemplate>();
+const currentRow = ref<any>(null);
 const isAdd = ref(true);
 
 // 表格配置
@@ -121,7 +121,7 @@ const tableParamsList = ref<TableParamType[]>([
 const extraParams = ref({});
 const showSearchForm = ref(true);
 
-const searchParamsList = ref([
+const searchParamsList = ref<SearchParamType[]>([
   {
     label: "影院名",
     prop: "name",
@@ -134,8 +134,11 @@ const searchParamsList = ref([
     type: "select",
     placeholder: "请选择所在省份",
     options: provinceOptions,
+    attrs: {
+      filterable: true
+    }
   },
-]) as SearchParamType[];
+]);
 
 const getTableData = async (pageParams: PagerType, searchParams: Record<string,any>) => {
 
@@ -154,7 +157,7 @@ const getTableData = async (pageParams: PagerType, searchParams: Record<string,a
 const showAddForm = () => {
   showEditDialog.value = true;
   isAdd.value = true;
-  currentRow.value = {};
+  currentRow.value = null;
 
 };
 
@@ -165,7 +168,7 @@ const showUpdateForm = async (row: any) => {
 };
 
 const reloadData = () => {
-  searchTableTemplateRef.value.pageQuery();
+  searchTableTemplateRef.value?.pageQuery();
 };
 
 const handleDelete = async (row: any) => {
