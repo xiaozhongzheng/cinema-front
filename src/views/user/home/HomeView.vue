@@ -70,12 +70,10 @@ const router = useRouter();
 
 // 响应式数据
 const urlArr = ref([
-  new URL("@/assets/images/lun04.png", import.meta.url).href,
-  new URL("@/assets/images/lun05.png", import.meta.url).href,
-  new URL("@/assets/images/lun06.png", import.meta.url).href,
-  new URL("@/assets/images/lun07.png", import.meta.url).href,
-  new URL("@/assets/images/lun02.jpg", import.meta.url).href,
-  new URL("@/assets/images/lun06.png", import.meta.url).href,
+  new URL("@/assets/images/lun04.webp", import.meta.url).href,
+  new URL("@/assets/images/lun05.webp", import.meta.url).href,
+  new URL("@/assets/images/lun06.webp", import.meta.url).href,
+  new URL("@/assets/images/lun07.webp", import.meta.url).href,
 ]);
 const hotfilmList = ref([]);
 const upcomingList = ref([]);
