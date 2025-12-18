@@ -79,7 +79,7 @@
       </el-header>
 
       <div class="emptyBox"></div>
-      <el-main>
+      <el-main class="mainContent">
         <router-view v-if="showView" :titleName="title"></router-view>
       </el-main>
     </el-container>
@@ -136,7 +136,7 @@ const showView = ref(false);
 
 // 生命周期钩子
 onMounted(() => {
-  document.title = userSystemTitle
+  document.title = userSystemTitle;
   indexPath.value = route.path;
   user.value = userStore.userInfo;
   console.log(userStore.userInfo, "userStore.userInfo;");
@@ -285,14 +285,14 @@ $height: 80px;
   .emptyBox {
     height: $height + 20px;
   }
-}
+  .mainContent {
+    background-color: #fff;
+    color: #333;
+    text-align: center;
+    padding: 0;
+    /* 去除滚轮条 */
+    overflow: visible;
 
-.el-main {
-  background-color: #fff;
-  color: #333;
-  text-align: center;
-  padding: 0;
-  /* 去除滚轮条 */
-  overflow: visible;
+  }
 }
 </style>

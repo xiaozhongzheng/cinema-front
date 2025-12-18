@@ -101,6 +101,16 @@ const tableParamsList = ref<TableParamType[]>([
     }
   },
   {
+    label: "创建时间",
+    prop: "createTime",
+    width: 180,
+  },
+  {
+    label: "更新时间",
+    prop: "updateTime",
+    width: 180,
+  },
+  {
     label: "操作",
     width: 150,
     prop: "option",

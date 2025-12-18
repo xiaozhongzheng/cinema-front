@@ -231,8 +231,8 @@ const handleAddSchedule = async (): Promise<void> => {
   const newValues = {
     ...scheduleForm,
     screeningDate: startDate.format("YYYY-MM-DD"),
-    startTime: dayjs(startTime).format(formatStr),
-    endTime: dayjs(startTime).add(duration, "minute").format(formatStr),
+    startTime: startDate.format(formatStr),
+    endTime: startDate.add(duration, "minute").format(formatStr),
   };
   if (props.actionType === "add") {
     await addScheduleApi(newValues);

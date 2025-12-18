@@ -14,19 +14,19 @@ export const userRoutes = {
       component: () => import('@/views/user/all_movie/MoviesView.vue')
     },
     {
-      path: '/user/showDetail/:filmId',
+      path: '/user/film-detail/:filmId',
       name: 'showDetail',
-      component: () => import('@/views/user/show/ShowFilmDetailView.vue')
+      component: () => import('@/views/user/film-detail/index.vue')
     },
     {
-      path: '/user/buyFilm/:filmId',
+      path: '/user/buy-ticket/:filmId',
       name: 'buy',
-      component: () => import('@/views/user/buy/BuyFilmView.vue')
+      component: () => import('@/views/user/buy-ticket/index.vue')
     },
     {
       path: '/user/chooseSeat',
       name: 'chooseSeat',
-      component: () => import('@/views/user/buy/ChooseSeatView.vue')
+      component: () => import('@/views/user/buy-ticket/ChooseSeatView.vue')
     },
     {
       path: '/user/me',

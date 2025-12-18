@@ -70,13 +70,14 @@
 
       <el-form-item class="w80" label="时长" prop="duration">
         <el-input
+          type="number"
           v-model.number="filmForm.duration"
           placeholder="请填写影片时长(单位：分钟)"
         />
       </el-form-item>
 
       <el-form-item label="图片" prop="poster">
-        <UploadImage :width="400" v-model="filmForm.poster" />
+        <UploadImage v-model="filmForm.poster" />
       </el-form-item>
 
       <el-form-item class="w80" label="简介" prop="plot">
@@ -163,7 +164,6 @@ const rules = reactive({
   regions: [{ required: true, message: "请选择上映地区" }],
   duration: [
     { required: true, message: "请填写影片时长" },
-    { type: "number", message: "时长必须为整数" },
     { pattern: /^[0-9]*$/, message: "只能输入正整数" },
   ],
   plot: [{ required: true, message: "请填写剧情简介" }],

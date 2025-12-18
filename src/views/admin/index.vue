@@ -372,6 +372,7 @@ $sidebar-bg: #545c64;
   flex: 1; // 占满剩余高度
   background-color: $bg-color;
   padding: 30px;
+  overflow-y: auto;
 }
 
 // 响应式调整

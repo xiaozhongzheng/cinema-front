@@ -10,12 +10,12 @@
       ref="carouselRef"
     >
       <el-carousel-item
-        v-for="(url, index) in urlArr"
-        :key="url"
+        v-for="(item, index) in carouselList"
+        :key="item.id"
         class="carouselItem"
-        @click="demo(url, index)"
+        @click="toShowFilmDetail(item.filmId!)"
       >
-        <el-image class="carouselImg" :src="url" fit="cover"></el-image>
+        <el-image class="carouselImg" :src="item.imgUrl" fit="cover"></el-image>
       </el-carousel-item>
     </el-carousel>
 
@@ -29,7 +29,7 @@
         <div class="title">热门榜单Top{{ num }}</div>
         <div v-if="topfilmList.length" class="rankList">
           <div class="top01" @click="toShowFilmDetail(topfilmList[0].id)">
-            <img :src="topfilmList[0].poster" :alt="topfilmList[0].title" />
+            <img :src="topfilmList[0].poster" />
             <div class="box">
               <span>{{ topfilmList[0].title }}</span>
               <span class="score">
@@ -59,12 +59,14 @@
   </div>
 </template>
 
-<script setup>
-// 钛动-测试冲突
+<script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import film from "@/api/film";
+import film, { getFilmesByStatus, getFilmListByScore } from "@/api/film";
 import UserHome from "./components/UserHome.vue";
+import { getCinemaCarouselListApi } from "@/api/cinema-carousel";
+import { CinemaCarouselItemType } from "@/api/cinema-carousel/type";
+import { FilmResultType, FilmTopType } from "@/api/film/type";
 
 const router = useRouter();
 
@@ -75,41 +77,28 @@ const urlArr = ref([
   new URL("@/assets/images/lun06.webp", import.meta.url).href,
   new URL("@/assets/images/lun07.webp", import.meta.url).href,
 ]);
-const hotfilmList = ref([]);
-const upcomingList = ref([]);
-const topfilmList = ref([]);
+const carouselList = ref<Required<CinemaCarouselItemType>[]>([]);
+const hotfilmList = ref<FilmResultType[]>([]);
+const upcomingList = ref<FilmResultType[]>([]);
+const topfilmList = ref<FilmTopType[]>([]);
 const num = ref(6);
 const top1Icon = ref(new URL("@/assets/images/top1.png", import.meta.url).href);
 const carouselRef = ref(null);
-// 方法
-const toShowAllFilm = () => {
-  router.push({
-    name: "movies",
-  });
-};
-const demo = (item, index) => {
-  const curIndex = carouselRef?.value.activeIndex;
-  console.log(item, curIndex, index, "curIndex");
-};
 
-const handleCarouselClick = (e) => {
-  console.log(e, "val");
-};
-
-const getFilmes = async () => {
+const getFilmData = async () => {
   try {
     // 获取正在上映的电影
-    hotfilmList.value = await film.getFilmesByStatus(2);
+    hotfilmList.value = await getFilmesByStatus(2);
     // 获取即将上映的影片
-    upcomingList.value = await film.getFilmesByStatus(1);
+    upcomingList.value = await getFilmesByStatus(1);
     // 获取排名前几的影片（根据评分排名）
-    topfilmList.value = await film.getFilmListByScore(num.value);
+    topfilmList.value = await getFilmListByScore(num.value);
   } catch (error) {
     console.error("获取电影数据失败:", error);
   }
 };
 
-const toShowFilmDetail = (filmId) => {
+const toShowFilmDetail = (filmId: number) => {
   router.push({
     name: "showDetail",
     params: {
@@ -118,32 +107,29 @@ const toShowFilmDetail = (filmId) => {
   });
 };
 
-const toBuyFilm = (filmId) => {
-  router.push({
-    name: "buy",
-    query: {
-      filmId,
-    },
-  });
+const getCinemaCarouselList = async () => {
+  const res = await getCinemaCarouselListApi();
+  carouselList.value = res;
+  console.log(res, "res");
 };
-
 // 生命周期
 onMounted(() => {
-  getFilmes();
+  getFilmData();
+  getCinemaCarouselList();
 });
 </script>
 
 <style lang="scss" scoped>
 .main {
   box-sizing: border-box;
-  max-width: 1200px;
-  min-width: 1000px;
+  max-width: 1200PX;
+  min-width: 1000PX;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  // gap: 20px;
   margin: auto;
-
   .carouselBox {
+    // max-height: 360px;
     :deep(.el-carousel__arrow) {
       color: #000;
       background-color: #fff;
@@ -151,11 +137,16 @@ onMounted(() => {
       font-size: 16px;
     }
 
+    :deep(.el-carousel__container){
+      height: 250px !important;
+    }
+
     /* 控制中间卡片的宽度 */
     .carouselItem {
       .carouselImg {
         width: 100%;
-        height: 100%;
+        max-height: 360px;
+
         object-fit: cover;
       }
     }
@@ -166,7 +157,7 @@ onMounted(() => {
     gap: 30px;
 
     .leftBox {
-      // width: 800px;
+      width: 800px;
       display: flex;
       flex-direction: column;
       gap: 20px;

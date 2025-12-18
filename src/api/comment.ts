@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 
-export function addComment(data: any): Promise<any> {
+export function addCommentApi(data: any): Promise<any> {
   return request({
     url: `/comment/save`,
     method: 'post',
@@ -8,7 +8,7 @@ export function addComment(data: any): Promise<any> {
   })
 }
 
-export function getCommentByFilmId(id: number): Promise<any> {
+export function getCommentByFilmIdApi(id: number): Promise<any> {
   return request({
     url: '/comment/get',
     method: 'get',

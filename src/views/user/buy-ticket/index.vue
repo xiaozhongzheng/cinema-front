@@ -1,0 +1,696 @@
+<template>
+  <div id="show" class="show-container">
+    <div class="top">
+      <div class="box">
+        <div class="film-poster-wrapper">
+          <img :src="film.poster" class="film-poster" alt="电影海报" />
+        </div>
+        <div class="film-info">
+          <div class="film-title-wrapper">
+            <h2 class="film-title-text">{{ film.title }}</h2>
+            <div v-if="film.averageScore" class="film-score">
+              <el-rate
+                v-model="film.averageScore"
+                disabled
+                text-color="#ff9900"
+                score-template="{value}"
+                class="score-rate"
+              ></el-rate>
+              <span class="score-value">{{ film.averageScore * 2 }}</span>
+            </div>
+            <div v-else class="score-empty">暂无评分</div>
+          </div>
+
+          <div class="film-detail-list">
+            <div class="film-detail-item">
+              <span class="detail-label">电影类型：</span>
+              {{ film.types }}
+            </div>
+            <div class="film-detail-item">
+              <span class="detail-label">上映地区：</span>
+              {{ film.regions }}
+            </div>
+            <div class="film-detail-item">
+              <span class="detail-label">时长：</span>
+              {{ film.duration }} 分钟
+            </div>
+            <div class="film-detail-item">
+              <span class="detail-label">上映日期：</span>
+              {{ film.releaseDate }} 上映
+            </div>
+          </div>
+
+          <div class="film-btn-group">
+            <el-button
+              type="info"
+              class="btn detail-btn"
+              icon="el-icon-s-help"
+              @click="toFilmDetail"
+            >
+              查看影片详情
+            </el-button>
+            <el-button
+              type="danger"
+              class="btn score-btn"
+              v-if="film.status === 2"
+              @click="dialogVisible = true"
+              icon="el-icon-star-on"
+            >
+              评分
+            </el-button>
+          </div>
+
+          <el-dialog
+            title="评分"
+            v-model="dialogVisible"
+            width="30%"
+            class="score-dialog"
+            @close="cancel"
+          >
+            <div class="dialog-score-display">
+              <span v-if="value !== 0" class="score-num">
+                {{ value * 2 }} 分
+              </span>
+            </div>
+            <div class="dialog-rate-wrapper">
+              <el-rate
+                v-model="value"
+                show-text
+                @change="showScore"
+                :texts="textArr"
+                allow-half
+                text-color="rgb(238, 188, 74)"
+              ></el-rate>
+            </div>
+            <el-form :model="commentForm" class="comment-form">
+              <el-form-item label="" class="form-item">
+                <el-input
+                  type="textarea"
+                  :rows="2"
+                  placeholder="说说你的看法"
+                  v-model="commentForm.content"
+                  class="comment-input"
+                ></el-input>
+              </el-form-item>
+            </el-form>
+
+            <template #footer>
+              <div class="dialog-footer">
+                <el-button @click="cancel" class="footer-btn cancel-btn"
+                  >取 消</el-button
+                >
+                <el-button
+                  type="primary"
+                  @click="saveComment"
+                  class="footer-btn submit-btn"
+                  >提 交</el-button
+                >
+              </div>
+            </template>
+          </el-dialog>
+        </div>
+      </div>
+    </div>
+
+    <div class="middle">
+      <el-breadcrumb separator-class="el-icon-arrow-right" class="breadcrumb">
+        <el-breadcrumb-item :to="{ path: '/user/home' }"
+          >首页</el-breadcrumb-item
+        >
+        <el-breadcrumb-item>选座购票</el-breadcrumb-item>
+      </el-breadcrumb>
+
+      <div class="schedule-date-wrapper" v-if="screeningDateList.length">
+        <span class="schedule-label">排片列表：</span>
+        <el-menu
+          :default-active="activeIndex"
+          class="date-menu"
+          mode="horizontal"
+          @select="handleSelect"
+        >
+          <el-menu-item
+            :index="dateStr"
+            v-for="dateStr in screeningDateList"
+            :key="dateStr"
+            class="date-menu-item"
+          >
+            <!-- {{ getHandleDate(item) }} -->
+            {{ dateStr }}
+          </el-menu-item>
+        </el-menu>
+
+        <el-table
+          :data="scheduleList"
+          class="schedule-table"
+        >
+          <el-table-column prop="startTime" label="放映时间" width="180">
+            <template #default="scope">
+              <div class="time-wrapper">
+                <div class="start-time">
+                  {{ getHandleTime(scope.row.startTime) }}
+                </div>
+                <div class="end-time">
+                  {{ getHandleTime(scope.row.endTime) }} 散场
+                </div>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="language"
+            label="语言版本"
+            width="180"
+          ></el-table-column>
+          <el-table-column prop="type" label="放映类型">
+            <template #default="scope"> {{ scope.row.type }}D </template>
+          </el-table-column>
+          <el-table-column
+            prop="screenRoomName"
+            label="放映厅"
+          ></el-table-column>
+          <el-table-column label="售价（元）">
+            <template #default="scope">
+              <span class="price">{{ scope.row.price }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="选座购票">
+            <template #default="scope">
+              <el-button
+                type="danger"
+                @click="toShowChooseSeat(scope.row)"
+                :disabled="scope.row.status === 1"
+                class="buy-btn"
+              >
+                选座购票
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+
+      <div class="empty-wrapper" v-else>
+        <el-empty :image-size="200" description="暂无排片"></el-empty>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, reactive, onMounted, computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { ElMessage } from "element-plus";
+// 导入API函数（需确保返回Promise类型）
+import { getScheduleDateList, getScheduleListByDate } from "@/api/schedule";
+import { getFilmById } from "@/api/film";
+import { addCommentApi } from "@/api/comment";
+
+// ========== 类型定义 ==========
+// 电影信息类型
+interface Film {
+  id: string | number;
+  poster: string;
+  title: string;
+  averageScore?: number;
+  types: string;
+  regions: string;
+  duration: number;
+  releaseDate: string;
+  status: number; // 1:未上映 2:热映
+  director?: string;
+  actors?: string;
+}
+
+// 评论表单类型
+interface CommentForm {
+  content: string;
+  score: number;
+  filmId: string | number;
+}
+
+// 排片信息类型
+interface Schedule {
+  id: string | number;
+  startTime: string; // 格式：2024-09-24 12:00:00
+  endTime: string;
+  language: string;
+  type: number; // 2/3D
+  screenRoomName: string;
+  price: number;
+  status?: number; // 1:已过期（禁用） 0:可用
+}
+
+// ========== 响应式数据 ==========
+const route = useRoute();
+const router = useRouter();
+
+// 电影ID（从路由参数获取）
+const filmId = computed(() => Number(route.params.filmId));
+
+// 电影信息
+const film = ref<Film>({
+  id: "",
+  poster: "",
+  title: "",
+  types: "",
+  regions: "",
+  duration: 0,
+  releaseDate: "",
+  status: 0,
+});
+
+// 评分相关
+const value = ref<number>(0);
+const textArr = ref<string[]>(["非常差", "比较差", "一般般", "比较好", "完美"]);
+const dialogVisible = ref<boolean>(false);
+
+// 评论表单
+const commentForm = reactive<CommentForm>({
+  content: "",
+  score: 0,
+  filmId: "",
+});
+
+// 排片相关
+const screeningDateList = ref<string[]>([]); // 排片日期列表
+const activeIndex = ref<string>(""); // 当前选中的日期
+const scheduleList = ref<Schedule[]>([]); // 排片列表
+
+// ========== 方法定义 ==========
+/**
+ * 获取单部电影详情
+ */
+const getSingleFilmById = async () => {
+  try {
+    const res = await getFilmById(filmId.value);
+    film.value = res;
+  } catch (error) {
+    ElMessage.error("获取电影信息失败");
+    console.error("获取电影失败：", error);
+  }
+};
+
+/**
+ * 提交评论
+ */
+const addComment = async () => {
+  if (value.value === 0) {
+    ElMessage.error("请选择评分");
+    return;
+  }
+
+  commentForm.score = value.value;
+  commentForm.filmId = filmId.value;
+
+  try {
+    await addCommentApi(commentForm);
+    ElMessage.success("评价成功");
+    cancel();
+    getSingleFilmById(); // 刷新电影信息（更新评分）
+  } catch (error) {
+    ElMessage.error("评价提交失败");
+    console.error("提交评论失败：", error);
+  }
+};
+
+/**
+ * 取消评分（重置弹窗）
+ */
+const cancel = () => {
+  value.value = 0;
+  commentForm.content = "";
+  dialogVisible.value = false;
+};
+
+/**
+ * 跳转到电影详情页
+ */
+const toFilmDetail = () => {
+  router.push({
+    name: "showDetail",
+    params: { filmId: filmId.value },
+  });
+};
+
+/**
+ * 获取排片日期列表
+ */
+const getScheduleDates = async () => {
+  try {
+    const res = (await getScheduleDateList(filmId.value)) || [];
+    res.length && res.sort((a: string, b: string) => {
+      // 对放映日期进行升序排序
+      return new Date(a).getTime() - new Date(b).getTime();
+    });
+    screeningDateList.value = [...res];
+    // 默认选中第一个日期
+    if (res.length) {
+      activeIndex.value = screeningDateList.value[0];
+      handleSelect(screeningDateList.value[0]);
+    }
+  } catch (error) {
+    ElMessage.error("获取排片日期失败");
+    console.error("获取排片日期失败：", error);
+  }
+};
+
+/**
+ * 格式化日期（处理排片日期显示）
+ * @param time 日期字符串/数组
+ */
+const getHandleDate = (time: string | any[]) => {
+  // 兼容原代码的日期格式（数组/字符串）
+  let date: Date;
+  if (Array.isArray(time)) {
+    date = new Date(time[0], time[1] - 1, time[2]);
+  } else {
+    date = new Date(time);
+  }
+  return date.toLocaleDateString();
+};
+
+/**
+ * 格式化时间（时分）
+ * @param time 时间字符串
+ */
+const getHandleTime = (time: string) => {
+  const d = new Date(time);
+  const h = d.getHours().toString().padStart(2, "0");
+  const m = d.getMinutes().toString().padStart(2, "0");
+  return `${h}:${m}`;
+};
+
+/**
+ * 选择日期后获取对应排片
+ * @param scheduleDate 选中的日期
+ */
+const handleSelect = async (scheduleDate: string) => {
+  try {
+    // const selectDate = getHandleDate(scheduleDate);
+    const res = await getScheduleListByDate(scheduleDate, filmId.value);
+    scheduleList.value = res || [];
+    isDisableButton(); // 处理按钮禁用状态
+  } catch (error) {
+    ElMessage.error("获取排片信息失败");
+    console.error("获取排片失败：", error);
+  }
+};
+
+/**
+ * 处理按钮禁用状态（过期场次禁用）
+ */
+const isDisableButton = () => {
+  const now = new Date();
+  // 修复原代码的k未定义问题
+  scheduleList.value.forEach((item) => {
+    const startTime = new Date(item.startTime);
+    item.status = now >= startTime ? 1 : 0;
+  });
+};
+
+/**
+ * 跳转到选座页面
+ * @param row 排片信息
+ */
+const toShowChooseSeat = (row: Schedule) => {
+  const now = new Date();
+  const startTime = new Date(row.startTime);
+
+  if (now >= startTime) {
+    ElMessage.error("该影片已经开始啦，请选择下一时间段的影片");
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
+    return;
+  }
+
+  router.push({
+    name: "chooseSeat",
+    query: { id: row.id },
+  });
+};
+
+/**
+ * 评分变化回调（原show方法，避免关键字冲突）
+ */
+const showScore = (val: number) => {
+  console.log("当前评分：", val);
+};
+
+// ========== 生命周期 ==========
+onMounted(async () => {
+  if (filmId.value) {
+    await Promise.allSettled([getSingleFilmById(), getScheduleDates()]);
+  } else {
+    ElMessage.warning("未获取到电影ID");
+    router.push("/user/home");
+  }
+});
+</script>
+
+<style scoped lang="scss">
+// 根容器
+.show-container {
+  background-color: #fff;
+}
+
+// 顶部区域
+.top {
+  width: 100%;
+  height: 280px;
+  background: rgb(99, 134, 247);
+
+  .box {
+    width: 1200px;
+    height: 100%;
+    margin: 0 auto;
+    display: flex;
+    align-items: center; // 垂直居中
+    padding: 0 10px;
+  }
+
+  // 海报容器
+  .film-poster-wrapper {
+    width: 200px;
+    height: 260px;
+    flex-shrink: 0; // 防止被挤压
+  }
+
+  .film-poster {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; // 防止图片变形
+    border-radius: 4px;
+  }
+
+  // 电影信息区域
+  .film-info {
+    flex: 1; // 占剩余空间
+    height: 260px;
+    margin-left: 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; // 垂直居中
+    color: white;
+
+    // 电影标题&评分容器（核心：替换float为flex）
+    .film-title-wrapper {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+
+      .film-title-text {
+        font-size: 24px;
+        font-weight: 600;
+        margin: 0;
+      }
+
+      // 有评分样式
+      .film-score {
+        display: flex;
+        align-items: center;
+        margin-left: 40px;
+
+        .score-rate {
+          margin-right: 8px;
+
+          :deep(.el-rate__icon) {
+            font-size: 26px;
+          }
+        }
+
+        .score-value {
+          color: rgb(238, 188, 74);
+          font-size: 18px;
+        }
+      }
+
+      // 无评分样式
+      .score-empty {
+        margin-left: 40px;
+        color: rgb(201, 199, 199);
+        font-weight: 400;
+        font-size: 20px;
+      }
+    }
+
+    // 电影详情列表
+    .film-detail-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px; // 替代margin，更简洁
+
+      .film-detail-item {
+        display: flex;
+        align-items: center;
+
+        .detail-label {
+          width: 80px;
+          flex-shrink: 0; // 固定宽度
+          text-align: right;
+          margin-right: 8px;
+        }
+      }
+    }
+
+    // 按钮组
+    .film-btn-group {
+      display: flex;
+      gap: 10px; // 按钮间距
+      margin-top: 20px;
+
+      .btn {
+        width: 140px;
+        border-radius: 4px;
+      }
+    }
+  }
+}
+
+// 评分弹窗样式
+.score-dialog {
+  text-align: center;
+
+  .dialog-score-display {
+    color: rgb(238, 188, 74);
+    height: 30px;
+    font-size: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .dialog-rate-wrapper {
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .comment-form {
+    margin-top: 16px;
+
+    .form-item {
+      margin-bottom: 0;
+
+      .comment-input {
+        resize: none;
+      }
+    }
+  }
+
+  .dialog-footer {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+
+    .footer-btn {
+      width: 80px;
+    }
+  }
+}
+
+// 中部区域
+.middle {
+  width: 1200px;
+  margin: 2% auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px; // 替代margin-bottom
+
+  // 面包屑
+  .breadcrumb {
+    font-size: 20px;
+  }
+
+  // 排片日期区域
+  .schedule-date-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 30px;
+
+    .schedule-label {
+      color: rgb(156, 155, 154);
+      font-size: 20px;
+    }
+
+    // 日期菜单
+    .date-menu {
+      width: 100%;
+    }
+
+    // 排片表格
+    .schedule-table {
+      width: 100%;
+
+      .time-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+
+        .start-time {
+          color: black;
+          font-size: 20px;
+        }
+
+        .end-time {
+          font-size: 14px;
+          color: #666;
+        }
+      }
+
+      .price {
+        color: red;
+        font-size: 18px;
+      }
+
+      .buy-btn {
+        width: 100px;
+      }
+    }
+  }
+
+  // 空状态
+  .empty-wrapper {
+    margin-top: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
+// 冗余样式清理
+.userContent {
+  width: 80%;
+}
+
+.filmDate {
+  display: inline-block;
+  width: 100px;
+  margin: 20px;
+  text-align: center;
+
+  &:active {
+    background: white;
+  }
+}
+</style>

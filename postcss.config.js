@@ -1,5 +1,5 @@
 module.exports = {
-  plugins: {
+  plugins: { // 大写PX可以忽略响应式
     'postcss-pxtorem': {
       rootValue: 10,
       propList: ['*'],               // 需要转换的属性，*表示全部

@@ -413,7 +413,7 @@ const showEditDialog = (row: ScheduleFormType): void => {
   actionType.value = "update";
   dialogFormVisible.value = true;
   scheduleForm.value = { ...row };
-  scheduleForm.value.startDateTime = `${row.screeningDate}  ${row.startTime}`;
+  // scheduleForm.value.startDateTime = `${row.screeningDate}  ${row.startTime}`;
 };
 
 const reloadData = () => {

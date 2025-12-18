@@ -45,7 +45,7 @@ export const adminRoutes = {
       meta: {
         // 路由元信息 用于存储数据的
         title: '影片管理', // 标题
-        icon: 'Menu' // 图标
+        icon: 'Film' // 图标
       }
     },
     {
@@ -57,7 +57,16 @@ export const adminRoutes = {
         icon: 'Aim' // 图标
       }
     },
-    // {
+    {
+      path: '/admin/cinema-carousel',
+      component: () => import('@/views/admin/cinema-carousel'),
+      meta: {
+        // 路由元信息 用于存储数据的
+        title: '影片轮播图管理', // 标题
+        icon: 'Menu' // 图标
+      }
+    },
+    // { cinema-carousel
     //   path: '/admin/addFilm',
     //   name: 'addFilm',
     //   component: () => import('@/views/admin/film/AddFilm.vue'),

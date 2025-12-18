@@ -142,7 +142,7 @@
 </template>
 
 <script>
-import { getUserById, updateUserById } from "@/api/user";
+import { getUserById, updateUserApi } from "@/api/user";
 import { updatePassword } from "@/api/common";
 import UploadImage from "@/components/UploadImage.vue";
 import { useUserStore } from '@/stores'
@@ -202,12 +202,12 @@ export default {
       this.$refs[formName].validate((valid) => {
         if (valid) {
           const id = this.userId;
-          this.updateUserById(id);
+          this.updateUserApi(id);
         }
       });
     },
-    async updateUserById(id) {
-      await updateUserById(id, this.userForm);
+    async updateUserApi(id) {
+      await updateUserApi(id, this.userForm);
       this.$message.success("修改成功");
       this.getSingleUser();
       window.location.reload();

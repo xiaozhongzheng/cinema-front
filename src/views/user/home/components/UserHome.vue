@@ -1,5 +1,5 @@
 <template>
-  <div class="main">
+  <div class="filmContainer">
     <div class="header">
       <span class="title">
         {{ status === 2 ? "正在热映" : "即将上映" }}
@@ -7,13 +7,13 @@
       </span>
       <el-link type="primary" @click="toShowAllFilm()">
         查看全部
-        <i class="el-icon-arrow-right"></i>
+        <el-icon><ArrowRight /></el-icon>
       </el-link>
     </div>
 
-    <div class="itemBox">
+    <div class="filmBox">
       <template v-for="item in handlefilmList" :key="item.id">
-        <FilmItem :item="item" />
+        <FilmCard :film="item" />
       </template>
     </div>
   </div>
@@ -22,8 +22,8 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useRouter } from "vue-router";
-import FilmItem from "@/views/user/components/FilmItem.vue";
-
+import FilmCard from '@/components/FilmCard.vue'
+import { ArrowRight } from "@element-plus/icons-vue";
 // 定义 props
 const props = defineProps<{
   filmList: any[]; // 实际项目中建议定义具体的电影数据类型接口
@@ -42,24 +42,25 @@ const toShowAllFilm = () => {
     name: "movies",
   });
 };
-</script>
+</script> 
 
 <style scoped lang="scss">
-.main {
+.filmContainer {
   .header {
     text-align: left;
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
+    margin-bottom: 20px;
     .title {
       color: rgb(231, 209, 121);
       font-size: 24px;
     }
   }
 
-  .itemBox {
+  .filmBox {
     display: grid;
-    grid-template-columns: repeat(4, 180px);
+    grid-template-columns: repeat(4, 1fr);
     gap: 20px;
   }
 }

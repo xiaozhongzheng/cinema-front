@@ -68,7 +68,7 @@
       </div>
     </div>
 
-    <el-table v-bind="tableProps" :max-height="800" :data="resultTableList">
+    <el-table v-bind="tableProps" :max-height="700" :data="resultTableList">
       <template v-for="item in tableParamsList" :key="item.prop">
         <el-table-column
           :fixed="item?.fixed"

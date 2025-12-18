@@ -34,17 +34,17 @@ export function pageQueryScheduleApi(params: any): Promise<any> {
 
 export function getScheduleDateList(id: number): Promise<any> {
   return request({
-    url: '/schedule/list/showDate',
+    url: '/schedule/screeningDateList',
     method: 'get',
     params: { filmId: id }
   })
 }
 
-export function getScheduleListByDate(date: string, id: number): Promise<any> {
+export function getScheduleListByDate(screeningDate: string, filmId: number): Promise<any> {
   return request({
-    url: '/schedule/list/showBuy',
+    url: '/schedule/screeningDate/scheduleList',
     method: 'get',
-    params: { time: date, filmId: id }
+    params: { screeningDate , filmId }
   })
 }
 

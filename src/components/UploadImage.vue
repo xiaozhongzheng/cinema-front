@@ -54,7 +54,7 @@ const beforeAvatarUpload = (file: File): boolean => {
   }
 
   // 校验文件大小
-  const maxSize = 10 * 1024 * 1024  // 2MB
+  const maxSize = 1 * 1024 * 1024  // 1MB
   const isLt2M = file.size <= maxSize
   if (!isLt2M) {
     ElMessage.error(`上传图片大小不能超过 ${maxSize / 1024 / 1024}MB!`)
