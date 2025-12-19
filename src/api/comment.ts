@@ -15,3 +15,19 @@ export function getCommentByFilmIdApi(id: number): Promise<any> {
     params: { filmId: id }
   })
 }
+
+export function deleteCommentApi(id: number | string): Promise<any> {
+  return request({
+    url: '/comment/delete',
+    method: 'post',
+    data: { id }
+  })
+}
+
+export function likeCommentApi(commentId: number | string, userId?: number | string): Promise<any> {
+  return request({
+    url: '/comment/like',
+    method: 'post',
+    data: { commentId, userId }
+  })
+}

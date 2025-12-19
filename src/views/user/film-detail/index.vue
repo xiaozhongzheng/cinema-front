@@ -107,34 +107,8 @@
       </div>
       <h3>电影评论</h3>
       <template v-if="userList.length">
-        <div class="userContent" v-for="user in userList" :key="user.id">
-          <div class="left">
-            <el-avatar
-              v-if="user.avatar"
-              :src="user.avatar"
-              class="avater"
-            ></el-avatar>
-            <el-avatar
-              v-else
-              icon="el-icon-user-solid"
-              :size="50"
-              src="https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png"
-              class="avater"
-            ></el-avatar>
-            <div>
-              <span class="username">{{ user.username }}</span>
-              <el-rate
-                v-model="user.score"
-                disabled
-                text-color="#ff9900"
-                score-template="{value}"
-              ></el-rate>
-            </div>
-          </div>
-          <div class="right">
-            <p>{{ user.content || "暂无描述" }}</p>
-            <p>评论时间：{{ user.createTime }}</p>
-          </div>
+        <div v-for="user in userList" :key="user.id">
+          <UserComment :comment="user" :filmId="filmId" @posted="getFilmAndComment" />
         </div>
       </template>
       <template v-else>
@@ -153,6 +127,7 @@ import { addCommentApi, getCommentByFilmIdApi } from "@/api/comment";
 import { getFilmById } from "@/api/film";
 import { ShoppingCart, Star } from "@element-plus/icons-vue";
 import { useUserStore } from "@/stores";
+import UserComment from '@/components/UserComment.vue'
 
 // ========== 类型定义 ==========
 // 电影信息类型
