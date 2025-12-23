@@ -1,268 +1,507 @@
 <template>
-  <div class="schedule-form">
-    <el-steps :active="currentStep" simple>
-      <el-step title="选择影院影厅" />
-      <el-step title="选择影片" />
-      <el-step title="设置时间价格" />
-      <el-step title="确认排片" />
-    </el-steps>
-
-    <!-- 步骤1：选择影院影厅 -->
-    <div v-if="currentStep === 1" class="step-content">
-      <el-form :model="form" label-width="100px">
-        <el-form-item label="选择影院" required>
-          <el-select 
-            v-model="form.cinemaId" 
-            placeholder="请选择影院"
-            @change="handleCinemaChange"
-            style="width: 300px"
-          >
-            <el-option
-              v-for="cinema in cinemaList"
-              :key="cinema.id"
-              :label="cinema.name"
-              :value="cinema.id"
-            />
-          </el-select>
-        </el-form-item>
-
-        <el-form-item label="选择影厅" required>
-          <el-select 
-            v-model="form.hallId" 
-            placeholder="请先选择影院"
-            :disabled="!form.cinemaId"
-            style="width: 300px"
-          >
-            <el-option
-              v-for="hall in hallList"
-              :key="hall.id"
-              :label="`${hall.name} (${hallTypeMap[hall.type]})`"
-              :value="hall.id"
-            />
-          </el-select>
-          
-          <!-- 影厅信息预览 -->
-          <div v-if="selectedHall" class="hall-info">
-            <el-descriptions :column="2" size="small">
-              <el-descriptions-item label="影厅类型">
-                {{ hallTypeMap[selectedHall.type] }}
-              </el-descriptions-item>
-              <el-descriptions-item label="座位数">
-                {{ selectedHall.totalSeats }}个
-              </el-descriptions-item>
-              <el-descriptions-item label="屏幕类型">
-                {{ selectedHall.screenType }}
-              </el-descriptions-item>
-              <el-descriptions-item label="音响系统">
-                {{ selectedHall.soundSystem }}
-              </el-descriptions-item>
-            </el-descriptions>
-          </div>
-        </el-form-item>
-      </el-form>
-      
-      <div class="step-actions">
-        <el-button @click="cancel">取消</el-button>
-        <el-button type="primary" @click="nextStep" :disabled="!form.cinemaId || !form.hallId">
-          下一步：选择影片
-        </el-button>
-      </div>
-    </div>
-
-    <!-- 步骤2：选择影片（基于影厅类型过滤） -->
-    <div v-if="currentStep === 2" class="step-content">
-      <el-form :model="form" label-width="100px">
-        <el-form-item label="选择影片" required>
-          <el-select 
-            v-model="form.filmId" 
-            placeholder="请选择影片"
-            style="width: 300px"
-          >
-            <el-option
-              v-for="film in filteredFilmList"
-              :key="film.id"
-              :label="film.title"
-              :value="film.id"
-            />
-          </el-select>
-        </el-form-item>
-        
-        <!-- 影片信息预览 -->
-        <div v-if="selectedFilm" class="film-info">
-          <el-descriptions :column="2" size="small">
-            <el-descriptions-item label="影片时长">
-              {{ selectedFilm.duration }}分钟
-            </el-descriptions-item>
-            <el-descriptions-item label="影片类型">
-              {{ selectedFilm.type }}
-            </el-descriptions-item>
-            <el-descriptions-item label="上映日期">
-              {{ selectedFilm.releaseDate }}
-            </el-descriptions-item>
-          </el-descriptions>
-        </div>
-      </el-form>
-      
-      <div class="step-actions">
-        <el-button @click="prevStep">上一步</el-button>
-        <el-button type="primary" @click="nextStep" :disabled="!form.filmId">
-          下一步：设置时间价格
-        </el-button>
-      </div>
-    </div>
-
-  </div>
+    <UserComment />
 </template>
 
-<script setup>
-import { ref, computed } from 'vue'
-import { ElMessage } from 'element-plus'
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { ArrowDown, ArrowUp } from '@element-plus/icons-vue'
+import LikedIcon from '@/components/LikedIcon.vue'
+import UserComment from '@/components/UserComment.vue'
 
-// 1. 步骤控制相关
-const currentStep = ref(1) // 当前步骤，对应1-4
-
-// 2. 表单核心数据
-const form = ref({
-  cinemaId: '',    // 选中的影院ID
-  hallId: '',      // 选中的影厅ID
-  filmId: '',      // 选中的影片ID
-  showDate: '',    // 后续步骤用：放映日期
-  startTime: '',   // 后续步骤用：开始时间
-  basePrice: 0     // 后续步骤用：基础票价
-})
-
-// 3. 静态数据与映射表
-// 影厅类型映射（匹配后端返回的类型标识）
-const hallTypeMap = ref({
-  '2d': '2D普通厅',
-  '3d': '3D厅',
-  'imax': 'IMAX厅',
-  'vip': 'VIP厅',
-  '4dx': '4DX动感厅'
-})
-
-// 模拟影院列表（实际项目从接口获取）
-const cinemaList = ref([
-  { id: 'cinema001', name: '万达影城（朝阳大悦城店）' },
-  { id: 'cinema002', name: 'CGV影城（海淀合生汇店）' },
-  { id: 'cinema003', name: '大地影院（丰台永旺店）' },
-  { id: 'cinema004', name: '博纳影城（通州万达店）' }
-])
-
-// 影厅列表（默认空，选择影院后赋值）
-const hallList = ref([])
-
-// 模拟影片列表（实际项目从接口获取）
-const filmList = ref([
-  { 
-    id: 'film001', title: '流浪地球3', 
-    duration: 178, type: '科幻/冒险', releaseDate: '2025-02-12',
-    suitableHallTypes: ['2d', '3d', 'imax'] // 支持的影厅类型
-  },
-  { 
-    id: 'film002', title: '飞驰人生3', 
-    duration: 125, type: '喜剧/运动', releaseDate: '2025-02-12',
-    suitableHallTypes: ['2d', 'vip'] 
-  },
-  { 
-    id: 'film003', title: '熊出没·逆转时空', 
-    duration: 99, type: '动画/儿童', releaseDate: '2025-02-12',
-    suitableHallTypes: ['2d', '3d'] 
-  },
-  { 
-    id: 'film004', title: '射雕英雄传：侠之大者', 
-    duration: 138, type: '武侠/动作', releaseDate: '2025-03-01',
-    suitableHallTypes: ['2d', 'imax', '4dx'] 
-  }
-])
-
-// 4. 选中项详情（用于预览展示）
-const selectedHall = ref(null)  // 选中的影厅详情
-const selectedFilm = ref(null)  // 选中的影片详情
-
-// 5. 计算属性：根据选中影厅过滤可用影片
-const filteredFilmList = computed(() => {
-  // 未选影厅时，显示全部影片
-  if (!selectedHall.value) return filmList.value
-  // 已选影厅时，只显示支持该影厅类型的影片
-  return filmList.value.filter(film => 
-    film.suitableHallTypes.includes(selectedHall.value.type)
-  )
-})
-
-// 6. 方法：选择影院后加载对应影厅
-const handleCinemaChange = (cinemaId) => {
-  // 清空之前的影厅选择
-  form.value.hallId = ''
-  selectedHall.value = null
-
-  // 模拟根据影院ID获取影厅列表（实际调用接口）
-  if (cinemaId === 'cinema001') {
-    hallList.value = [
-      { id: 'hall001', name: '1号厅', type: '2d', totalSeats: 120, screenType: '标准银幕', soundSystem: '杜比全景声' },
-      { id: 'hall002', name: '2号厅', type: '3d', totalSeats: 150, screenType: 'RealD 3D银幕', soundSystem: 'DTS:X' },
-      { id: 'hall003', name: 'IMAX厅', type: 'imax', totalSeats: 280, screenType: 'IMAX巨幕', soundSystem: 'IMAX 6.1声道' }
-    ]
-  } else if (cinemaId === 'cinema002') {
-    hallList.value = [
-      { id: 'hall004', name: 'A厅', type: '2d', totalSeats: 100, screenType: '标准银幕', soundSystem: '杜比全景声' },
-      { id: 'hall005', name: 'VIP厅', type: 'vip', totalSeats: 40, screenType: '舒适银幕', soundSystem: 'JBL环绕声' },
-      { id: 'hall006', name: '4DX厅', type: '4dx', totalSeats: 80, screenType: '4DX专用银幕', soundSystem: '4DX音效系统' }
-    ]
-  } else {
-    // 其他影院默认影厅
-    hallList.value = [
-      { id: 'hall007', name: '普通厅', type: '2d', totalSeats: 120, screenType: '标准银幕', soundSystem: '立体声' },
-      { id: 'hall008', name: '3D厅', type: '3d', totalSeats: 140, screenType: '3D银幕', soundSystem: '杜比音效' }
-    ]
-  }
+// 评论类型定义
+interface CommentItem {
+    id: number
+    userId: number
+    username: string
+    avatar?: string
+    content: string
+    score?: number
+    createTime: string
+    likes: number
+    liked: boolean
+    replies?: CommentItem[]
+    showAllReplies?: boolean
 }
 
-// 7. 方法：选择影厅后获取影厅详情
-const handleHallChange = (hallId) => {
-  // 从影厅列表中匹配选中的影厅详情
-  selectedHall.value = hallList.value.find(hall => hall.id === hallId) || null
-}
-
-// 8. 方法：选择影片后获取影片详情
-const handleFilmChange = (filmId) => {
-  // 从影片列表中匹配选中的影片详情
-  selectedFilm.value = filmList.value.find(film => film.id === filmId) || null
-}
-
-// 9. 步骤控制方法
-// 下一步
-const nextStep = () => {
-  if (currentStep.value < 4) {
-    currentStep.value++
-    // 若进入步骤2，默认选中第一个影片（可选逻辑）
-    if (currentStep.value === 2 && filteredFilmList.value.length > 0) {
-      form.value.filmId = filteredFilmList.value[0].id
-      handleFilmChange(form.value.filmId)
+// 静态数据
+const staticComments: CommentItem[] = [
+    {
+        id: 1,
+        userId: 101,
+        username: '张三',
+        avatar: 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png',
+        content: '这部电影真的很精彩，特效做得非常棒！',
+        score: 4.5,
+        createTime: '2024-01-15 14:30',
+        likes: 24,
+        liked: true,
+        replies: [
+            {
+                id: 11,
+                userId: 102,
+                username: '李四',
+                avatar: 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png',
+                content: '我也这么觉得，特别是最后那场戏！',
+                createTime: '2024-01-15 15:20',
+                likes: 5,
+                liked: false
+            }
+        ],
+        showAllReplies: false
+    },
+    {
+        id: 2,
+        userId: 103,
+        username: '王五',
+        content: '剧情有点拖沓，但演员演技在线',
+        score: 3,
+        createTime: '2024-01-14 09:15',
+        likes: 12,
+        liked: false,
+        replies: [],
+        showAllReplies: false
+    },
+    {
+        id: 3,
+        userId: 104,
+        username: '赵六',
+        avatar: 'https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png',
+        content: '强烈推荐！值得一看的好电影',
+        score: 5,
+        createTime: '2024-01-13 20:45',
+        likes: 36,
+        liked: true,
+        showAllReplies: false
+    },
+    {
+        id: 4,
+        userId: 105,
+        username: '钱七',
+        content: '画面很美，配乐也很好听',
+        createTime: '2024-01-12 16:10',
+        likes: 8,
+        liked: false,
+        showAllReplies: false,
+        replies: [
+            {
+                id: 41,
+                userId: 106,
+                username: '孙八',
+                content: '是的，原声带真的很不错',
+                createTime: '2024-01-12 17:30',
+                likes: 2,
+                liked: true
+            },
+            {
+                id: 42,
+                userId: 107,
+                username: '周九',
+                avatar: 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png',
+                content: '尤其是主题曲，很有感染力',
+                createTime: '2024-01-12 18:45',
+                likes: 3,
+                liked: false
+            },
+            {
+                id: 43,
+                userId: 108,
+                username: '吴十',
+                content: '看了三遍了，每次都有新感受',
+                createTime: '2024-01-12 19:30',
+                likes: 1,
+                liked: true
+            },
+            {
+                id: 44,
+                userId: 109,
+                username: '郑十一',
+                content: '配乐确实是亮点',
+                createTime: '2024-01-12 20:15',
+                likes: 0,
+                liked: false
+            }
+        ]
     }
-  }
+]
+
+// 响应式数据
+const comments = ref<CommentItem[]>([])
+const activeReplyId = ref<number | null>(null)
+const replyContent = ref<string>('')
+
+// 初始化数据
+onMounted(() => {
+    comments.value = staticComments.map(comment => ({
+        ...comment,
+        showAllReplies: false
+    }))
+})
+
+// 切换回复折叠/展开
+const toggleReplies = (commentId: number) => {
+    const comment = comments.value.find(c => c.id === commentId)
+    if (comment?.replies?.length) {
+        comment.showAllReplies = !comment.showAllReplies
+    }
 }
 
-// 上一步
-const prevStep = () => {
-  if (currentStep.value > 1) {
-    currentStep.value--
-  }
+// 点赞逻辑
+const handleLike = (commentId: number) => {
+    const comment = comments.value.find(c => c.id === commentId)
+    if (comment) {
+        comment.liked = !comment.liked
+        comment.likes += comment.liked ? 1 : -1
+        // 点赞动画
+        const likeBtn = document.querySelector(`.comment-item[data-comment-id="${commentId}"] .like-btn`)
+        likeBtn?.classList.add('liked-animation')
+        setTimeout(() => likeBtn?.classList.remove('liked-animation'), 300)
+    }
 }
 
-// 取消排片（重置所有数据） 
-const cancel = () => {
-  currentStep.value = 1
-  form.value = {
-    cinemaId: '',
-    hallId: '',
-    filmId: '',
-    showDate: '',
-    startTime: '',
-    basePrice: 0
-  }
-  selectedHall.value = null
-  selectedFilm.value = null
-  ElMessage({ type: 'info', message: '已取消排片操作' })
+// 切换回复框
+const toggleReply = (commentId: number) => {
+    activeReplyId.value = activeReplyId.value === commentId ? null : commentId
+    if (activeReplyId.value !== commentId) replyContent.value = ''
+}
+
+// 取消回复
+const cancelReply = () => {
+    activeReplyId.value = null
+    replyContent.value = ''
+}
+
+// 提交回复
+const submitReply = (commentId: number) => {
+    if (!replyContent.value.trim()) return alert('回复内容不能为空')
+    const comment = comments.value.find(c => c.id === commentId)
+    if (comment) {
+        const newReply: CommentItem = {
+            id: Date.now(),
+            userId: 999,
+            username: '我',
+            content: replyContent.value,
+            createTime: new Date().toLocaleString(),
+            likes: 0,
+            liked: false
+        }
+        comment.replies = comment.replies || []
+        comment.replies.unshift(newReply)
+        if (comment.replies.length > 2) comment.showAllReplies = false
+        replyContent.value = ''
+        activeReplyId.value = null
+    }
 }
 </script>
+
+<style scoped lang="scss">
+.static-comment {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.comment-list {
+    .comment-item {
+        padding: 20px 0;
+        border-bottom: 1px solid #f0f0f0;
+
+        &:last-child {
+            border-bottom: none;
+        }
+
+        // ========== 第一行：头像+评论信息 ==========
+        .comment-row-1 {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            width: 100%;
+            margin-bottom: 16px;
+            background-color: pink;
+            // 头像区域（固定宽度）
+            .avatar-section {
+                flex-shrink: 0;
+                width: 50px;
+            }
+
+            // 评论主体
+            .comment-body {
+                flex: 1;
+                min-width: 0;
+
+                .user-info {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 8px;
+
+                    .username {
+                        font-weight: 600;
+                        color: #333;
+                        font-size: 16px;
+                    }
+
+                    .user-meta {
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+
+                        .time {
+                            color: #999;
+                            font-size: 13px;
+                        }
+
+                        .comment-rating :deep(.el-rate__icon) {
+                            font-size: 16px;
+                        }
+                    }
+                }
+
+                .comment-content {
+                    margin: 8px 0 12px;
+                    line-height: 1.6;
+                    color: #333;
+                }
+
+                .comment-actions {
+                    display: flex;
+                    align-items: center;
+                    gap: 20px;
+
+                    .like-btn {
+                        display: flex;
+                        align-items: center;
+                        gap: 4px;
+                        color: #999;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+
+                        &:hover,
+                        &.liked {
+                            color: #f56c6c;
+                        }
+
+                        &.liked-animation {
+                            animation: like-pop 0.3s ease;
+                        }
+
+                        .like-count {
+                            font-size: 14px;
+                        }
+                    }
+
+                    .reply-btn {
+                        color: #409eff;
+                        cursor: pointer;
+                        font-size: 14px;
+
+                        &:hover {
+                            color: #79bbff;
+                        }
+                    }
+                }
+
+                .reply-box {
+                    margin-top: 12px;
+                    padding: 12px;
+                    background: #f8f9fa;
+                    border-radius: 6px;
+
+                    .reply-textarea {
+                        width: 100%;
+                        padding: 8px;
+                        border: 1px solid #dcdfe6;
+                        border-radius: 4px;
+                        resize: vertical;
+                        font-family: inherit;
+                        font-size: 14px;
+
+                        &:focus {
+                            outline: none;
+                            border-color: #409eff;
+                        }
+                    }
+
+                    .reply-actions {
+                        display: flex;
+                        justify-content: flex-end;
+                        gap: 8px;
+                        margin-top: 8px;
+
+                        .cancel-btn,
+                        .submit-btn {
+                            padding: 6px 16px;
+                            border-radius: 4px;
+                            font-size: 14px;
+                            cursor: pointer;
+                            border: none;
+                        }
+
+                        .cancel-btn {
+                            background: #f0f0f0;
+                            color: #666;
+
+                            &:hover {
+                                background: #e0e0e0;
+                            }
+                        }
+
+                        .submit-btn {
+                            background: #409eff;
+                            color: #fff;
+
+                            &:hover {
+                                background: #79bbff;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ========== 第二行：回复列表 ==========
+        .comment-row-2 {
+            width: 100%;
+
+            .replies-container {
+                padding-left: 66px; // 与头像对齐（50px+16px gap）
+
+                .replies-header {
+                    margin-bottom: 8px;
+                    cursor: pointer;
+
+                    .replies-count {
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 4px;
+                        color: #409eff;
+                        font-size: 14px;
+                        font-weight: 500;
+
+                        &:hover {
+                            color: #79bbff;
+                        }
+
+                        .replies-expand-icon {
+                            transition: transform 0.3s ease;
+                            font-size: 12px;
+
+                            &.expanded {
+                                transform: rotate(180deg);
+                            }
+                        }
+                    }
+                }
+
+                .replies-content {
+                    .replies-collapsed {
+                        .view-more {
+                            padding: 8px 12px;
+                            background: #f8f9fa;
+                            border-radius: 4px;
+                            color: #409eff;
+                            font-size: 14px;
+                            cursor: pointer;
+                            text-align: center;
+                            transition: all 0.3s ease;
+
+                            &:hover {
+                                background: #e8f3ff;
+                                color: #79bbff;
+                            }
+                        }
+                    }
+
+                    .replies-expanded {
+                        .reply-item {
+                            display: flex;
+                            gap: 12px;
+                            padding: 12px 0;
+                            border-bottom: 1px dashed #f0f0f0;
+
+                            &:last-child {
+                                border-bottom: none;
+                            }
+
+                            .reply-avatar {
+                                flex-shrink: 0;
+                                width: 36px;
+                            }
+
+                            .reply-content {
+                                flex: 1;
+
+                                .reply-header {
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 8px;
+                                    margin-bottom: 4px;
+
+                                    .reply-username {
+                                        font-weight: 500;
+                                        color: #333;
+                                        font-size: 14px;
+                                    }
+
+                                    .reply-time {
+                                        color: #999;
+                                        font-size: 12px;
+                                    }
+                                }
+
+                                .reply-text {
+                                    color: #333;
+                                    line-height: 1.5;
+                                    font-size: 14px;
+                                }
+                            }
+                        }
+
+                        .view-less {
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 4px;
+                            margin-top: 12px;
+                            padding: 8px;
+                            color: #409eff;
+                            font-size: 14px;
+                            cursor: pointer;
+                            border-radius: 4px;
+                            transition: all 0.3s ease;
+
+                            &:hover {
+                                background: #f8f9fa;
+                                color: #79bbff;
+                            }
+
+                            .el-icon {
+                                font-size: 12px;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+.empty-comment {
+    text-align: center;
+    padding: 40px 0;
+}
+
+// 点赞动画
+@keyframes like-pop {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.2);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+</style>

@@ -28,7 +28,7 @@
             <i class="el-icon-s-custom"></i>
             身份
           </template>
-          {{ employee.roleId === 2 ? '管理员' : '员工' }}
+          {{ employee.roleId === 1 ? '管理员' : '用户' }}
         </el-descriptions-item>
         <el-descriptions-item>
           <template slot="label">

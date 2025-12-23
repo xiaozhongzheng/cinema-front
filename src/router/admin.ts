@@ -18,7 +18,7 @@ export const adminRoutes = {
       component: () => import('@/views/admin/employee'),
       meta: {
         // 路由元信息 用于存储数据的
-        title: '员工管理', // 标题
+        title: '用户管理', // 标题已改为用户管理（管理员可管理系统用户）
         icon: 'UserFilled' // 图标
       }
     },

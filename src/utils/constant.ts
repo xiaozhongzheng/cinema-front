@@ -42,7 +42,7 @@ export const accountStatusOptions = [
         value: 0,
       },
     ]
-export const rolePathList = ['/user', '/employee', '/admin']
+export const rolePathList = ['/user', '/admin']
 export const payStatus = ['已取消', '已支付', '已完成']
 
 

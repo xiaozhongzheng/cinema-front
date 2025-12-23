@@ -178,16 +178,16 @@ const handleSuccess = () => {
   ElMessage.success("上传成功");
 };
 
-const exportExcel = async () => {
-  try {
-    const res = await emp.exportExcel();
-    console.log(res, "export");
-    FileSaver.saveAs(res.data, "员工信息表.xlsx");
-  } catch (error) {
-    console.error("导出失败:", error);
-    ElMessage.error("导出失败");
-  }
-};
+// const exportExcel = async () => {
+//   try {
+//     const res = await emp.exportExcel();
+//     console.log(res, "export");
+//     FileSaver.saveAs(res.data, "员工信息表.xlsx");
+//   } catch (error) {
+//     console.error("导出失败:", error);
+//     ElMessage.error("导出失败");
+//   }
+// };
 
 const handleUpdate = async (row: any, status: number) => {
   await updateUserApi({ ...row, status });

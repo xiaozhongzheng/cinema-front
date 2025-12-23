@@ -1,6 +1,5 @@
 import { adminRoutes } from './admin';
 import { userRoutes } from './user';
-import { employeeRoutes } from './employee';
 
 export const routes = [
   {
@@ -32,7 +31,6 @@ export const routes = [
     component: () => import('@/views/404/404View.vue')
   },
   adminRoutes,
-  employeeRoutes,
   userRoutes,
   {
     path: '/:pathMatch(.*)*',
