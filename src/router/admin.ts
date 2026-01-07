@@ -1,12 +1,15 @@
 export const adminRoutes = {
   path: '/admin',
   name: 'admin',
+  meta: {
+    requiresAdmin: true
+  },
   component: () => import('@/views/admin/index.vue'),
   redirect: '/admin/home',
   children: [
     {
       path: '/admin/home',
-      component: () => import('@/views/admin/home'),
+      component: () => import('@/views/admin/home/index.vue'),
       meta: {
         // 路由元信息 用于存储数据的
         title: '个人中心', // 标题
@@ -14,8 +17,8 @@ export const adminRoutes = {
       }
     },
     {
-      path: '/admin/employee',
-      component: () => import('@/views/admin/employee'),
+      path: '/admin/users',
+      component: () => import('@/views/admin/users/index.vue'),
       meta: {
         // 路由元信息 用于存储数据的
         title: '用户管理', // 标题已改为用户管理（管理员可管理系统用户）

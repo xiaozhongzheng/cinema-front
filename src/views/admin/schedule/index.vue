@@ -45,14 +45,9 @@
 <script setup lang="ts">
 import {
   ref,
-  reactive,
   onMounted,
-  nextTick,
   computed,
   h,
-  toRaw,
-  isRef,
-  isReactive,
 } from "vue";
 import { getScreenRoomListApi, getScreensByCinemaIdApi } from "@/api/screen";
 import {

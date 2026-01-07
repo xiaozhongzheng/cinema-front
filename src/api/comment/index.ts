@@ -7,7 +7,7 @@ export function addCommentApi(data: any): Promise<any> {
     data
   })
 }
-
+// /single/user-film
 export function getCommentByFilmIdApi(id: number): Promise<any> {
   return request({
     url: '/comment/get',
@@ -15,6 +15,15 @@ export function getCommentByFilmIdApi(id: number): Promise<any> {
     params: { filmId: id }
   })
 }
+
+export function getCommentByFilmAndUserIdApi(data: {filmId: number;userId: number}): Promise<any> {
+  return request({
+    url: '/comment/single/user-film',
+    method: 'get',
+    params: { ...data}
+  })
+}
+
 
 export function deleteCommentApi(id: number | string): Promise<any> {
   return request({

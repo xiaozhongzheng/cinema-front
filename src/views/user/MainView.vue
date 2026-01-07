@@ -204,7 +204,7 @@ const goAdminPage = () => {
 
   const routeUrl = router.resolve({
     path: "/admin", // 目标路由路径（如：/user/detail）
-    query: { id: 123, name: "test" }, // 拼接在 URL 上的参数（可选）
+    // query: { id: 123, name: "test" }, // 拼接在 URL 上的参数（可选）
   });
 
   // 2. 新建标签页打开解析后的 URL

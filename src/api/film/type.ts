@@ -1,6 +1,6 @@
 
 export interface FilmFormType {
-  id?: number;
+  id: number;
   title: string;
   poster: string;
   director: string;
@@ -13,10 +13,24 @@ export interface FilmFormType {
   plot: string;
   dateList: any[];
 }
-
+type StatusType = 1 | 2 | 3; // 1-即将上映，2-上映中，3-下线（新增的影片默认是1）
+export interface FilmType {
+  id: number;
+  poster: string;
+  title: string;
+  director: string;
+  actors: string;
+  types: string;
+  regions: string;
+  duration: number;
+  releaseDate: string;
+  status: StatusType;
+  plot: string;
+  averageScore: number;
+}
 
 export interface FilmResultType extends FilmFormType {
-  status: 1 | 2 |3; // 1-即将上映，2-上映中，3-下线（新增的影片默认是1）
+  status: StatusType
 }
 
 export interface FilmTopType {

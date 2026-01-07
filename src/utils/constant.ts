@@ -28,6 +28,7 @@ export const shceduleStatusOptions = [
 export const host = 'localhost'
 // const host = '47.96.128.212'
 
+
 export const userRoleOptions = [
   {label: '用户',value: 0},
   {label: '管理员',value: 1}

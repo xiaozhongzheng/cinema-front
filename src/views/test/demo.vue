@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
     <UserComment />
 </template>
 
@@ -504,4 +504,4 @@ const submitReply = (commentId: number) => {
         transform: scale(1);
     }
 }
-</style>
+</style> -->
