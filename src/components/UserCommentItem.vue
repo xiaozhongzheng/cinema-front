@@ -8,7 +8,7 @@
         :src="commentItem.avatar"
         :size="props.avatarSize || 45"
       ></el-avatar>
-      <el-avatar v-else :size="50">
+      <el-avatar v-else :size="props.avatarSize || 45">
         {{ commentItem.username.charAt(0).toUpperCase() }}
       </el-avatar>
     </div>
@@ -73,7 +73,7 @@
 import { ref, reactive } from "vue";
 import LikedIcon from "./icons/LikedIcon.vue";
 import UnLikedIcon from "./icons/UnLikedIcon.vue";
-import { CommentItemType } from "./UserComment.vue";
+import {  CommentItemType } from "./UserComment.vue";
 import { useUserStore } from "@/stores";
 
 type PropsType = {
