@@ -21,7 +21,7 @@
           <span>{{ commentItem.username }}</span>
           <span class="replyText" v-if="commentItem.replyId">
             回复
-            <span>@{{ getUsernameByCommentId(commentItem.replyId) }}</span>
+            <span>@{{ props.getUsernameByCommentId(commentItem.replyId) }}</span>
           </span>
         </div>
         <div class="user-meta">
@@ -60,11 +60,8 @@
           <UnLikedIcon :size="18" :unliked="commentItem.unLiked" />
           <span class="like-count">{{ commentItem.unLikes || 0 }}</span>
         </div>
-        <span class="reply-btn" @click="toggleReply(commentItem.id)">
-          回复
-        </span>
+        <span class="reply-btn" @click="toggleReply(commentItem.id)"> 回复 </span>
       </div>
-
     </div>
   </div>
 </template>
@@ -73,77 +70,27 @@
 import { ref, reactive } from "vue";
 import LikedIcon from "./icons/LikedIcon.vue";
 import UnLikedIcon from "./icons/UnLikedIcon.vue";
-import {  CommentItemType } from "./UserComment.vue";
-import { useUserStore } from "@/stores";
+import { CommentItemType } from "./UserComment.vue";
 
 type PropsType = {
   commentItem: CommentItemType;
-  commentList: CommentItemType[];
   avatarSize?: number;
+  getUsernameByCommentId: (commentId: number) => string;
 };
 const props = defineProps<PropsType>();
-const emit = defineEmits(["showReplyInput"]);
-const userStore = useUserStore();
-const activeReplyId = ref<number | null>(null);
-const replyContent = ref<string>("");
+const emit = defineEmits(["showReplyInput", "like", "unlike"]);
 
-const getUsernameByCommentId = (commentId: number) => {
-  const item = props.commentList.find((item) => item.id === commentId);
-  return item?.username || "";
-};
-
-// 点赞逻辑
 const handleLike = (commentId: number) => {
-  const commentItem = props.commentList.find((c) => c.id === commentId);
-  if (commentItem) {
-    commentItem.liked = !commentItem.liked;
-    commentItem.likes += commentItem.liked ? 1 : -1;
-  }
+  emit("like", commentId);
 };
+
 const handleUnLike = (commentId: number) => {
-  const commentItem = props.commentList.find((c) => c.id === commentId);
-  if (commentItem) {
-    commentItem.unLiked = !commentItem.unLiked;
-    commentItem.unLikes += commentItem.unLiked ? 1 : -1;
-  }
+  emit("unlike", commentId);
 };
+
 // 切换回复框
 const toggleReply = (commentId: number) => {
-  emit("showReplyInput", commentId, props.commentList);
-};
-
-// 取消回复
-const cancelReply = () => {
-  activeReplyId.value = null;
-  replyContent.value = "";
-};
-// 提交回复
-const submitReply = (commentId: number) => {
-  if (!replyContent.value.trim()) return alert("回复内容不能为空");
-  const commentItem = props.commentList.find((c) => c.id === commentId);
-  if (commentItem) {
-    const newReply: CommentItemType = {
-      id: Date.now(),
-      userId: userStore.userId,
-      username: userStore.username,
-      content: replyContent.value,
-      avatar: userStore.userInfo.avatar,
-      createTime: new Date().toLocaleString(),
-      likes: 0,
-      liked: false,
-      unLiked: false,
-      unLikes: 0,
-      replyId: activeReplyId.value!,
-    };
-    // commentItem.replies = commentItem.replies || [];
-    console.log(newReply, "newReply");
-    props.commentList.push(newReply);
-    // commentItem.replies.unshift(newReply);
-    // if (commentItem.replies.length > 2) commentItem.showAllReplies = false;
-    replyContent.value = "";
-    activeReplyId.value = null;
-  }
-  //   emit("handleReply")
+  emit("showReplyInput", commentId);
 };
 </script>
 
@@ -155,9 +102,11 @@ const submitReply = (commentId: number) => {
   width: 100%;
   margin-bottom: 16px;
   font-size: 14px;
+
   // 头像区域（固定宽度）
   .avatar-section {
     flex-shrink: 0;
+
     ::v-deep .el-avatar {
       font-size: 20px;
     }
@@ -169,7 +118,8 @@ const submitReply = (commentId: number) => {
     font-size: 16px;
     display: flex;
     flex-direction: column;
-    gap: 4PX;
+    gap: 4px;
+
     .user-info {
       display: flex;
       justify-content: space-between;
@@ -205,6 +155,7 @@ const submitReply = (commentId: number) => {
         }
       }
     }
+
     .commentItem-content {
       color: #333;
     }

@@ -1,5 +1,6 @@
 <template>
   <div class="main">
+    <UserComment />
     <el-carousel
       indicator-position="outside"
       :interval="3000"
@@ -67,6 +68,7 @@ import UserHome from "./components/UserHome.vue";
 import { getCinemaCarouselListApi } from "@/api/cinema-carousel";
 import { CinemaCarouselItemType } from "@/api/cinema-carousel/type";
 import { FilmResultType, FilmTopType } from "@/api/film/type";
+import UserComment from "@/components/UserComment.vue";
 
 const router = useRouter();
 
@@ -122,12 +124,13 @@ onMounted(() => {
 <style lang="scss" scoped>
 .main {
   box-sizing: border-box;
-  max-width: 1200PX;
-  min-width: 1000PX;
+  max-width: 1200px;
+  min-width: 1000px;
   display: flex;
   flex-direction: column;
   // gap: 20px;
   margin: auto;
+
   .carouselBox {
     // max-height: 360px;
     :deep(.el-carousel__arrow) {
@@ -137,7 +140,7 @@ onMounted(() => {
       font-size: 16px;
     }
 
-    :deep(.el-carousel__container){
+    :deep(.el-carousel__container) {
       height: 250px !important;
     }
 
