@@ -64,18 +64,20 @@
       </div>
       <div>
         <h3>电影评论</h3>
-        <template v-if="userList.length">
+        <UserCommentModule ref="commentRef" :filmId="filmId" />
+
+        <!-- <template v-if="userList.length">
           <div v-for="user in userList" :key="user.id">
             <UserComment
               :comment="user"
               :filmId="filmId"
-              @posted="getFilmAndComment"
+              @posted="getNewFilmInfo"
             />
           </div>
         </template>
         <template v-else>
           <el-empty :image-size="200" description="暂无用户评论"></el-empty>
-        </template>
+        </template> -->
       </div>
     </div>
 
@@ -86,6 +88,7 @@
       @submit="saveComment"
     />
   </div>
+
 </template>
 
 <script setup lang="ts">
@@ -101,10 +104,10 @@ import {
 import { getFilmById } from "@/api/film";
 import { ShoppingCart, Star } from "@element-plus/icons-vue";
 import { useUserStore } from "@/stores";
-import UserComment from "@/components/UserComment.vue";
 import AddCommentDialog from "./components/AddCommentDialog.vue";
 import { CommentFormType } from "@/api/comment/type";
 import { FilmType } from "@/api/film/type";
+import UserCommentModule from "./components/UserCommentModule.vue";
 
 // 用户评论类型
 interface UserComment {
@@ -145,19 +148,18 @@ const commentForm = ref<CommentFormType | null>(null);
 
 const userStore = useUserStore();
 
-// 用户评论列表
-const userList = ref<UserComment[]>([]);
+const commentRef = ref<any>()
 
 // ========== 方法定义 ==========
 // 获取电影和评论数据
-const getFilmAndComment = async () => {
+const getNewFilmInfo = async () => {
   // 获取电影详情
   const filmRes = await getFilmById(filmId.value);
   film.value = filmRes;
 
-  // 获取评论列表
-  const commentRes = await getCommentByFilmIdApi(filmId.value);
-  userList.value = commentRes;
+  // // 获取评论列表
+  // const commentRes = await getCommentByFilmIdApi(filmId.value);
+  // userList.value = commentRes;
 };
 
 const toRate = async () => {
@@ -179,8 +181,10 @@ const saveComment = async (values: any) => {
   });
   dialogVisible.value = false;
   ElMessage.success("评价成功");
-  getFilmAndComment(); // 重新加载评论
+  getNewFilmInfo(); // 重新加载评论
+  commentRef.value?.getCommentList()
 };
+
 
 // 跳转到购票页面
 const toBuyFilm = () => {
@@ -201,7 +205,7 @@ const showScore = (val: number) => {
 // ========== 生命周期 ==========
 // 组件挂载时加载数据（替代created）
 onMounted(() => {
-  filmId.value && getFilmAndComment();
+  filmId.value && getNewFilmInfo();
 });
 </script>
 

@@ -25,7 +25,7 @@
           </span>
         </div>
         <div class="user-meta">
-          <span class="time">{{ commentItem.createTime }}</span>
+          <span class="time">{{ commentItem.createdTime }}</span>
           <el-rate
             v-if="commentItem.score"
             :model-value="commentItem.score"
@@ -68,9 +68,9 @@
 
 <script setup lang="ts">
 import { ref, reactive } from "vue";
-import LikedIcon from "./icons/LikedIcon.vue";
-import UnLikedIcon from "./icons/UnLikedIcon.vue";
-import { CommentItemType } from "./UserComment.vue";
+import LikedIcon from "@/components/icons/LikedIcon.vue";
+import UnLikedIcon from "@/components/icons/UnLikedIcon.vue";
+import { CommentItemType, ReactionEnum } from "@/api/comment/type";
 
 type PropsType = {
   commentItem: CommentItemType;
@@ -78,14 +78,14 @@ type PropsType = {
   getUsernameByCommentId: (commentId: number) => string;
 };
 const props = defineProps<PropsType>();
-const emit = defineEmits(["showReplyInput", "like", "unlike"]);
+const emit = defineEmits(["showReplyInput", "likeOrUnLike"]);
 
 const handleLike = (commentId: number) => {
-  emit("like", commentId);
+  emit("likeOrUnLike", commentId,ReactionEnum.Like);
 };
 
 const handleUnLike = (commentId: number) => {
-  emit("unlike", commentId);
+  emit("likeOrUnLike", commentId,ReactionEnum.UnLike);
 };
 
 // 切换回复框

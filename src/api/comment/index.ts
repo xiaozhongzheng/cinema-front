@@ -1,4 +1,5 @@
 import request from '@/utils/request'
+import { CommentReactionType, ReplyCommentType } from './type';
 
 export function addCommentApi(data: any): Promise<any> {
   return request({
@@ -7,10 +8,19 @@ export function addCommentApi(data: any): Promise<any> {
     data
   })
 }
+export function replyCommentApi(data: ReplyCommentType): Promise<any> {
+  return request({
+    url: `/comment/reply`,
+    method: 'post',
+    data
+  })
+}
+
+
 // /single/user-film
 export function getCommentByFilmIdApi(id: number): Promise<any> {
   return request({
-    url: '/comment/get',
+    url: '/comment/info/list',
     method: 'get',
     params: { filmId: id }
   })
@@ -40,3 +50,12 @@ export function likeCommentApi(commentId: number | string, userId?: number | str
     data: { commentId, userId }
   })
 }
+
+export function handleCommentReactionApi(data: CommentReactionType): Promise<any> {
+  return request({
+    url: '/comment-reactions/likeOrUnLike',
+    method: 'post',
+    data
+  })
+}
+

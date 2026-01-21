@@ -1,6 +1,5 @@
 <template>
   <div class="main">
-    <UserComment />
     <el-carousel
       indicator-position="outside"
       :interval="3000"

@@ -2,13 +2,16 @@
   <div class="static-comment">
     <!-- 评论列表 -->
     <div v-if="commentsData.length" class="comment-list">
-      <div v-for="comment in commentsData" :key="comment.id" class="comment-item">
+      <div
+        v-for="comment in commentsData"
+        :key="comment.id"
+        class="comment-item"
+      >
         <!-- 根评论 -->
         <UserCommentItem
           :commentItem="comment"
           :getUsernameByCommentId="getUsernameByCommentId"
-          @like="handleLike"
-          @unlike="handleUnLike"
+          @likeOrUnLike="handleLikeOrUnLike"
           @showReplyInput="showReplyText"
         />
 
@@ -44,8 +47,7 @@
                   :commentItem="reply"
                   :avatarSize="30"
                   :getUsernameByCommentId="getUsernameByCommentId"
-                  @like="handleLike"
-                  @unlike="handleUnLike"
+                  @likeOrUnLike="handleLikeOrUnLike"
                   @showReplyInput="showReplyText"
                 />
                 <div class="view-less" @click="toggleReplies(comment.id)">
@@ -65,7 +67,8 @@
           class="reply-box"
         >
           <div class="reply-input">
-            <el-avatar :src="userStore?.userInfo?.avatar" :size="45"> </el-avatar>
+            <el-avatar :src="userStore?.userInfo?.avatar" :size="45">
+            </el-avatar>
             <el-input
               type="textarea"
               v-model="replyContent"
@@ -77,7 +80,9 @@
 
           <div class="reply-actions">
             <button class="cancel-btn" @click="cancelReply">取消</button>
-            <button class="submit-btn" @click="submitReply(comment.id)">回复</button>
+            <button class="submit-btn" @click="submitReply(comment.id)">
+              回复
+            </button>
           </div>
         </div>
       </div>
@@ -85,7 +90,7 @@
 
     <!-- 空状态 -->
     <div v-else class="empty-comment">
-      <el-empty description="暂无评论" :image-size="100" />
+      <el-empty :image-size="200" description="暂无用户评论"></el-empty>
     </div>
   </div>
 </template>
@@ -96,27 +101,25 @@ import { ArrowDown, ArrowUp } from "@element-plus/icons-vue";
 import UserCommentItem from "./UserCommentItem.vue";
 import { useUserStore } from "@/stores";
 import { ElMessage } from "element-plus";
+import {
+  getCommentByFilmIdApi,
+  handleCommentReactionApi,
+  replyCommentApi,
+} from "@/api/comment";
+import {
+  CommentItemType,
+  ReactionEnum,
+  ReplyCommentType,
+} from "@/api/comment/type";
+
+type PropsType = {
+  filmId: number;
+};
+const props = defineProps<PropsType>();
 
 // 评论类型
-export type CommentItemType = {
-  id: number;
-  parentId?: number;
-  replyId?: number;
-  userId: number;
-  username: string;
-  avatar?: string;
-  content: string;
-  score?: number | null;
-  createTime: string;
-  likes: number;
-  liked: boolean;
-  unLikes: number;
-  unLiked: boolean;
-  showAllReplies?: boolean;
-  replies?: CommentItemType[];
-};
 
-const flatComments = reactive<CommentItemType[] | []>([
+const list = [
   // 主评论
   {
     id: 1,
@@ -199,7 +202,8 @@ const flatComments = reactive<CommentItemType[] | []>([
     unLiked: false,
     score: null,
   },
-]);
+];
+const flatComments = reactive<CommentItemType[]>([]);
 
 const activeReplyId = ref<number | null>(null);
 const replyContent = ref("");
@@ -207,6 +211,12 @@ const replyUsername = ref("");
 
 // 用户信息
 const userStore = useUserStore();
+
+const getCommentList = async () => {
+  const commentRes = await getCommentByFilmIdApi(props.filmId);
+  Object.assign(flatComments, commentRes);
+  buildCommentsTree();
+};
 const commentsData = ref<CommentItemType[]>([]);
 // 构建评论树
 const commentMap = computed(() => {
@@ -224,7 +234,7 @@ const parentComments = computed(() => {
 });
 
 onMounted(() => {
-  buildCommentsTree();
+  getCommentList();
 });
 
 // 根评论 + 子评论挂载
@@ -265,6 +275,43 @@ const getUsernameByCommentId = (commentId: number) => {
   return item?.username || "";
 };
 
+const handleLikeOrUnLike = async (
+  commentId: number,
+  reactionType: ReactionEnum,
+) => {
+  await handleCommentReactionApi({ commentId, reactionType });
+  const item = flatComments.find((c) => c.id === commentId);
+  if (!item) return;
+  if (reactionType === ReactionEnum.Like) {
+    if (item.liked) {
+      item.liked = false;
+      item.likes--;
+    } else {
+      item.liked = true;
+      item.likes++;
+
+      if (item.unLiked) {
+        item.unLiked = false;
+        item.unLikes--;
+      }
+    }
+  } else {
+    if (item.unLiked) {
+      item.unLiked = false;
+      item.unLikes--;
+    } else {
+      item.unLiked = true;
+      item.unLikes++;
+
+      if (item.liked) {
+        item.liked = false;
+        item.likes--;
+      }
+    }
+  }
+   buildCommentsTree();
+};
+
 // 点赞逻辑
 const handleLike = (commentId: number) => {
   const commentItem = flatComments.find((c) => c.id === commentId);
@@ -287,33 +334,41 @@ const handleUnLike = (commentId: number) => {
   }
 };
 
-// 提交回复
-const submitReply = (commentId: number) => {
+// 提交回复（思路：先向数据库中添加数据并返回当前回复信息，然后将回复信息添加到本地达到数据更新得目的）
+const submitReply = async (commentId: number) => {
   if (!replyContent.value.trim()) {
     return ElMessage.warning("回复内容不能为空.");
   }
 
-  const newReply: CommentItemType = {
-    id: Date.now(),
-    userId: userStore.userId,
-    username: userStore.username || "肖xx",
-    content: replyContent.value,
-    avatar: userStore.userInfo.avatar,
-    createTime: new Date().toLocaleString(),
-    likes: 0,
-    liked: false,
-    unLikes: 0,
-    unLiked: false,
-    replyId: activeReplyId.value!,
+  // 构建请求体
+  const replyParams: ReplyCommentType = {
+    filmId: props.filmId, // 当前影片ID，需要你在页面或store里存好
+    parentId: commentId, // 回复的主评论ID
+    replyId: activeReplyId.value,
+    content: replyContent.value, // 回复内容
   };
 
+  const data = await replyCommentApi(replyParams);
+  const newReply: CommentItemType = {
+    ...data,
+    userId: userStore.userId,
+    username: userStore.username || "肖xx",
+    avatar: userStore.userInfo.avatar,
+  };
+
+  // 更新本地评论列表
   const comment = getCommentById(commentId);
   if (comment) {
+    if (!comment.replies) comment.replies = [];
     comment.replies.push(newReply);
-    flatComments.push({ ...newReply, parentId: commentId });
-    replyContent.value = "";
-    activeReplyId.value = null;
   }
+
+  // 更新扁平化列表
+  flatComments.push({ ...newReply });
+
+  // 清空输入框
+  replyContent.value = "";
+  activeReplyId.value = null;
 };
 
 // 展开/折叠回复
@@ -324,6 +379,11 @@ const toggleReplies = (commentId: number) => {
     buildCommentsTree();
   }
 };
+
+// 2. 暴露给父组件
+defineExpose({
+  getCommentList,
+});
 </script>
 
 <style scoped lang="scss">

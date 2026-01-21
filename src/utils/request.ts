@@ -3,9 +3,9 @@ import axios, {
   type AxiosResponse,
   type InternalAxiosRequestConfig
 } from 'axios'
-import { ElMessage } from 'element-plus'
 import router from '@/router'
 import { useUserStore } from '@/stores'
+import { ElMessage } from 'element-plus'
 
 // 响应数据接口
 export interface ApiResponse<T = any> {
