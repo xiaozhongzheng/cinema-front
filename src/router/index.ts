@@ -2,6 +2,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '@/stores'
 import { routes } from './routes';
+import { RoleEnum } from '@/utils/constant';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -23,17 +24,30 @@ const whiteList = ['/login', '/404', '/register', '/test']
 //   // 路由守卫：拦截后台页面访问
 
 // })
-
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
-  const roleId = userStore.userInfo?.roleId
-
-  if (to.path.includes("admin") && roleId !== 1) {
-    // 非管理员访问后台，跳回首页
-    next('/')
-  } else {
-    next()
+  const token = userStore.token
+  const role = userStore.userInfo?.roleId
+  console.log(to.matched, 'to.matched')
+  // 需要登录
+  if (to.matched.some(r => r.meta.requiresAuth)) {
+    if (!token) {
+      return next({
+        path: "/login",
+        query: {
+          redirect: to.fullPath
+        }
+      });
+    }
   }
+
+  // 需要管理员
+  if (to.matched.some(r => r.meta.requiresAdmin)) {
+    if (role !== RoleEnum.Admin) return next('/404')
+  }
+
+  next()
 })
+
 
 export default router

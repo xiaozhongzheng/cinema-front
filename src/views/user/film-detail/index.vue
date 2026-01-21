@@ -64,20 +64,13 @@
       </div>
       <div>
         <h3>电影评论</h3>
-        <UserCommentModule ref="commentRef" :filmId="filmId" />
 
-        <!-- <template v-if="userList.length">
-          <div v-for="user in userList" :key="user.id">
-            <UserComment
-              :comment="user"
-              :filmId="filmId"
-              @posted="getNewFilmInfo"
-            />
-          </div>
-        </template>
-        <template v-else>
-          <el-empty :image-size="200" description="暂无用户评论"></el-empty>
-        </template> -->
+        <UserCommentModule v-if="isLogin" ref="commentRef" :filmId="filmId" />
+        <el-empty
+          v-else
+          :image-size="200"
+          description="登录后查看用户评论"
+        ></el-empty>
       </div>
     </div>
 
@@ -88,7 +81,6 @@
       @submit="saveComment"
     />
   </div>
-
 </template>
 
 <script setup lang="ts">
@@ -108,16 +100,6 @@ import AddCommentDialog from "./components/AddCommentDialog.vue";
 import { CommentFormType } from "@/api/comment/type";
 import { FilmType } from "@/api/film/type";
 import UserCommentModule from "./components/UserCommentModule.vue";
-
-// 用户评论类型
-interface UserComment {
-  id?: string | number;
-  username: string;
-  avatar?: string;
-  content: string;
-  score: number;
-  createTime: string;
-}
 
 const route = useRoute();
 const router = useRouter();
@@ -148,7 +130,11 @@ const commentForm = ref<CommentFormType | null>(null);
 
 const userStore = useUserStore();
 
-const commentRef = ref<any>()
+const commentRef = ref<any>();
+
+const isLogin = computed(() => {
+  return !!userStore?.token;
+});
 
 // ========== 方法定义 ==========
 // 获取电影和评论数据
@@ -163,6 +149,9 @@ const getNewFilmInfo = async () => {
 };
 
 const toRate = async () => {
+  if (!isLogin.value) {
+    return ElMessage.warning("只有登录后的用户才可以评分噢~");
+  }
   const data = await getCommentByFilmAndUserIdApi({
     filmId: filmId.value,
     userId: userStore.userId,
@@ -182,9 +171,8 @@ const saveComment = async (values: any) => {
   dialogVisible.value = false;
   ElMessage.success("评价成功");
   getNewFilmInfo(); // 重新加载评论
-  commentRef.value?.getCommentList()
+  commentRef.value?.getCommentList();
 };
-
 
 // 跳转到购票页面
 const toBuyFilm = () => {

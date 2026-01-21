@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { login, getUserInfo, logout } from '@/api/common'
+import { login, getUserInfo, logout } from '@/api/user'
 import { PersistenceOptions } from 'pinia-plugin-persistedstate' // 需确保安装了该插件
 
 // 定义持久化配置（可选，用于自定义存储行为）

@@ -1,24 +1,17 @@
 <template>
-  <div v-if="!route.hidden">
+  <div v-if="route.name === 'admin'">
     <!-- 管理员菜单 -->
-    <template v-if="route.name === 'admin'">
-      <el-menu-item v-for="item in route.children" :key="item.path" :index="item.path">
-        <el-icon v-if="item.meta?.icon">
-          <component :is="getIconComponent(item.meta.icon)" />
-        </el-icon>
-        <template #title>{{ item.meta?.title }}</template>
-      </el-menu-item>
-    </template>
-
-    <!-- 员工菜单
-    <template v-if="route.name === 'employee' && roleId === 1">
-      <el-menu-item v-for="item in route.children" :key="item.path" :index="item.path">
-        <el-icon v-if="item.meta?.icon">
-          <component :is="getIconComponent(item.meta.icon)" />
-        </el-icon>
-        <template #title>{{ item.meta?.title }}</template>
-      </el-menu-item>
-    </template> -->
+    <el-menu-item
+      v-for="item in route.children"
+      :key="item.path"
+      :index="`/admin/${item.path}`" 
+    >
+    <!-- index的值和路由配置的path有关 -->
+      <el-icon v-if="item.meta?.icon">
+        <component :is="getIconComponent(item.meta.icon)" />
+      </el-icon>
+      <template #title>{{ item.meta?.title }}</template>
+    </el-menu-item>
   </div>
 </template>
 
@@ -47,6 +40,8 @@ interface Props {
 
 // Props 定义
 const props = defineProps<Props>();
+
+  console.log(props.route,'props.route')
 
 // 图标组件映射
 const getIconComponent = (iconName?: string) => {

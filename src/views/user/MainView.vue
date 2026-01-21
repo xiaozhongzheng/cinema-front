@@ -83,11 +83,6 @@
         <router-view v-if="showView" :titleName="title"></router-view>
       </el-main>
     </el-container>
-    <LoginDialog
-      v-if="showLoginDialog"
-      :dialogVisible="showLoginDialog"
-      @handleClose="handleClose"
-    />
   </div>
 </template>
 
@@ -98,7 +93,6 @@ import { useUserStore } from "@/stores";
 import { recharge as rechargeApi } from "@/api/user";
 import logo from "@/assets/images/logo.png";
 import { ElMessage } from "element-plus";
-import LoginDialog from "@/components/login";
 import userDefault from "@/assets/images/user-default.png";
 import {
   ShoppingCart,
@@ -114,11 +108,6 @@ const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
 
-// 响应式变量
-const showLoginDialog = ref(false);
-const handleClose = () => {
-  showLoginDialog.value = false;
-};
 const url = logo;
 const menuList = ref([
   { name: "首页", path: "/user/home" },
@@ -148,7 +137,7 @@ watch(
   (newVal) => {
     console.log(newVal, "newVal");
     user.value = newVal;
-  }
+  },
 );
 
 // 监听
@@ -158,7 +147,7 @@ watch(
     indexPath.value = to.path;
     document.documentElement.scrollTop = 0; // 使页面回到顶部
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 watch(title, () => {
@@ -168,8 +157,13 @@ watch(title, () => {
 // 方法
 const handleCommand = (command: string) => {
   if (command === "login") {
-    showLoginDialog.value = true;
-    return;
+    router.push({
+      path: "/login",
+      query: {
+        redirect: route.fullPath, // 当前页面的完整路径
+      },
+    });
+    return
   }
 
   if (command === "logout") {
@@ -292,7 +286,6 @@ $height: 80px;
     padding: 0;
     /* 去除滚轮条 */
     overflow: visible;
-
   }
 }
 </style>

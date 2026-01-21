@@ -32,72 +32,55 @@
     </el-form-item>
   </el-form>
   <div class="button-group">
-    <el-button type="primary" @click="handleLogin" class="login-btn"> 登录 </el-button>
-    <el-button type="info" @click="handleClose" class="register-btn"> 取消 </el-button>
+    <el-button type="primary" class="login-btn" @click="handleLogin">
+      立即登录
+    </el-button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, defineEmits } from "vue";
+import { ref, reactive } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { useUserStore } from "@/stores";
 import { ElMessage } from "element-plus";
 
-const emit = defineEmits<{
-  (e: "handleClose"): void;
-}>();
-const handleClose = () => {
-  emit("handleClose");
-};
-
+const router = useRouter();
+const route = useRoute();
 const store = useUserStore();
+
 const formRef = ref();
-// 响应式数据
 const userForm = reactive({
   username: "xzzz",
   password: "123",
   roleId: 0,
 });
 
-const rules = reactive({
-  username: [
-    { required: true, message: "请输入用户名" },
-    { min: 4, max: 8, message: "账号的位数在4到8之间" },
-  ],
-  password: [
-    { required: true, message: "请输入密码" },
-    { min: 3, max: 10, message: "密码的位数在3到10之间" },
-  ],
-});
-
 const handleLogin = async () => {
-  if (!formRef.value) return;
   const valid = await formRef.value.validate();
-  if (valid) {
-    await store.loginAction({ ...userForm });
-    ElMessage.success("登录成功");
-    emit("handleClose");
-  }
+  if (!valid) return;
+
+  await store.loginAction({ ...userForm });
+  ElMessage.success("登录成功");
+
+  const redirect = route.query.redirect as string;
+  console.log(redirect,'redirect')
+  router.replace(redirect || "/user/home");
 };
 </script>
 
 <style lang="scss" scoped>
 .loginForm {
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  // 表单样式优化
-  :deep(.el-form-item) {
-    width: 100%;
-    max-width: 400px;
-    .el-form-item__label {
-      font-weight: 500;
-    }
+
+  :deep(.el-input__wrapper) {
+    border-radius: 10px;
   }
-  .button-group {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+
+  .login-btn {
+    width: 100%;
+    height: 42px;
+    border-radius: 10px;
+    font-size: 16px;
   }
 }
 </style>

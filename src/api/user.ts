@@ -1,10 +1,30 @@
 import request from '@/utils/request'
 
-export function pageQueryUserApi(params: any): Promise<any> {
+
+
+export function login(data: any): Promise<any> {
   return request({
-    url: '/user/page',
+    url: '/user/login',
+    method: 'post',
+    data
+  })
+}
+
+export function getUserInfo(roleId: number): Promise<any> {
+  return request({
+    url: `/info`,
     method: 'get',
-    params
+    params: {
+      roleId: roleId
+    }
+  })
+}
+
+export function logout(data: any): Promise<any> {
+  return request({
+    url: `/user/logout`,
+    method: 'post',
+    data
   })
 }
 
@@ -13,6 +33,14 @@ export function register(data: any): Promise<any> {
     url: '/user/register',
     method: 'post',
     data
+  })
+}
+
+export function pageQueryUserApi(params: any): Promise<any> {
+  return request({
+    url: '/user/page',
+    method: 'get',
+    params
   })
 }
 

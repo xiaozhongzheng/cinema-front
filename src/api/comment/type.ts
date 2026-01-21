@@ -23,13 +23,14 @@ export type CommentItemType = {
   avatar?: string;
   content: string;
   score?: number | null;
-  createTime: string;
+  createdTime: string;
   likes: number;
   liked: boolean;
   unLikes: number;
   unLiked: boolean;
   showAllReplies?: boolean;
   replies?: CommentItemType[];
+  showCount: number;      // 当前展示多少条
 };
 
 export enum ReactionEnum {

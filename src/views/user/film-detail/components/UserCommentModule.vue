@@ -42,7 +42,7 @@
               <!-- 展开状态 -->
               <div v-else class="replies-expanded">
                 <UserCommentItem
-                  v-for="reply in comment.replies"
+                  v-for="reply in comment.replies.slice(0, comment.showCount)"
                   :key="reply.id"
                   :commentItem="reply"
                   :avatarSize="30"
@@ -50,6 +50,23 @@
                   @likeOrUnLike="handleLikeOrUnLike"
                   @showReplyInput="showReplyText"
                 />
+
+                <el-button
+                  v-if="comment.showCount < comment.replies.length"
+                  class="load-more"
+                  @click="comment.showCount += 3"
+                  type="primary"
+                  link
+                  >展开更多回复</el-button
+                >
+
+                <!-- <div
+                  v-if="comment.showCount < comment.replies.length"
+                  class="load-more"
+                  @click="comment.showCount += 3"
+                >
+                  展开更多回复
+                </div> -->
                 <div class="view-less" @click="toggleReplies(comment.id)">
                   <el-icon>
                     <ArrowUp />
@@ -67,7 +84,14 @@
           class="reply-box"
         >
           <div class="reply-input">
-            <el-avatar :src="userStore?.userInfo?.avatar" :size="45">
+            <el-avatar
+              v-if="userStore?.userInfo?.avatar"
+              :src="userStore?.userInfo?.avatar"
+              :size="45"
+            >
+            </el-avatar>
+            <el-avatar v-else :size="45">
+              {{ userStore?.userInfo?.username.charAt(0).toUpperCase() }}
             </el-avatar>
             <el-input
               type="textarea"
@@ -218,17 +242,46 @@ const getCommentList = async () => {
   buildCommentsTree();
 };
 const commentsData = ref<CommentItemType[]>([]);
-// 构建评论树
+
+/**
+ * 评论映射计算属性
+ * 将扁平化的评论列表按父评论ID分组，构建为 Map 结构
+ * key: 父评论ID (parentId)
+ * value: 对应父评论下的所有子评论数组
+ *
+ * 特别说明：
+ * - 当 parentId 为 -1 或 null 时，表示这是根评论
+ * - 其他 parentId 表示该评论是回复某个特定评论
+ */
 const commentMap = computed(() => {
+  // 创建 Map 存储评论分组，key为父评论ID，value为评论数组
   const map = new Map<number, CommentItemType[]>();
+
+  // 遍历所有扁平化的评论
   flatComments.forEach((item) => {
+    // 获取父评论ID，如果为null则设为-1（表示根评论）
     const parentId = item.parentId ?? -1;
-    if (!map.has(parentId)) map.set(parentId, []);
-    map.get(parentId)!.push({ ...item, replies: [] });
+
+    // 如果Map中还没有该父评论的分组，先创建空数组
+    if (!map.has(parentId)) {
+      map.set(parentId, []);
+    }
+
+    // 将评论添加到对应父评论的分组中，并初始化replies数组
+    map.get(parentId)!.push({
+      ...item,
+      replies: [], // 初始化子评论数组，后续会填充
+    });
   });
+
   return map;
 });
 
+/**
+ * 父评论计算属性
+ * 筛选出所有根评论（即parentId为-1的评论）
+ * 这些评论将作为评论树的顶层节点
+ */
 const parentComments = computed(() => {
   return flatComments.filter((c) => c.parentId === -1);
 });
@@ -237,14 +290,35 @@ onMounted(() => {
   getCommentList();
 });
 
-// 根评论 + 子评论挂载
+/**
+ * 构建评论树结构函数
+ * 将扁平化的评论数据转换为树形结构，用于前端展示
+ * 树形结构包含以下字段：
+ * - showAllReplies: 是否显示所有回复
+ * - showCount: 当前显示的回复数量
+ * - ...评论原始数据
+ * - replies: 子评论数组（嵌套结构）
+ */
 const buildCommentsTree = () => {
+  // console.log(commentMap.value, 'commentMap.value');
+
+  // 构建评论树
   const tree = parentComments.value.map((c) => ({
-    showAllReplies: false,
+    // 控制展开/折叠的状态
+    showAllReplies: false, // 默认不显示所有回复
+    showCount: 3, // 默认显示3条回复
+
+    // 展开父评论的所有属性
     ...c,
-    replies: commentMap.value.get(c.id) || [],
+
+    // 获取该父评论的所有子评论
+    // 从commentMap中根据评论ID获取对应的子评论数组
+    replies: commentMap.value.get(c.id) || [], // 如果没有子评论则返回空数组
   }));
+
+  // 将构建好的树形结构赋值给响应式数据
   commentsData.value = tree;
+  // 注意：这里没有return，因为结果直接存储到了响应式变量中
 };
 
 // 判断是否当前评论的回复
@@ -276,11 +350,15 @@ const getUsernameByCommentId = (commentId: number) => {
 };
 
 const handleLikeOrUnLike = async (
-  commentId: number,
+  commentItem: CommentItemType,
   reactionType: ReactionEnum,
 ) => {
-  await handleCommentReactionApi({ commentId, reactionType });
-  const item = flatComments.find((c) => c.id === commentId);
+  await handleCommentReactionApi({
+    commentId: commentItem.id,
+    reactionType,
+  });
+  // const item = flatComments.find((c) => c.id === commentId);
+  const item = commentItem;
   if (!item) return;
   if (reactionType === ReactionEnum.Like) {
     if (item.liked) {
@@ -309,30 +387,10 @@ const handleLikeOrUnLike = async (
       }
     }
   }
-   buildCommentsTree();
+  // buildCommentsTree();
 };
 
-// 点赞逻辑
-const handleLike = (commentId: number) => {
-  const commentItem = flatComments.find((c) => c.id === commentId);
-  console.log(commentsData.value, "commentsData.value");
-  console.log(commentId, commentItem);
 
-  if (commentItem) {
-    commentItem.liked = !commentItem.liked;
-    commentItem.likes += commentItem.liked ? 1 : -1;
-    buildCommentsTree();
-  }
-};
-
-const handleUnLike = (commentId: number) => {
-  const commentItem = flatComments.find((c) => c.id === commentId);
-  if (commentItem) {
-    commentItem.unLiked = !commentItem.unLiked;
-    commentItem.unLikes += commentItem.unLiked ? 1 : -1;
-    buildCommentsTree();
-  }
-};
 
 // 提交回复（思路：先向数据库中添加数据并返回当前回复信息，然后将回复信息添加到本地达到数据更新得目的）
 const submitReply = async (commentId: number) => {
@@ -360,11 +418,11 @@ const submitReply = async (commentId: number) => {
   const comment = getCommentById(commentId);
   if (comment) {
     if (!comment.replies) comment.replies = [];
-    comment.replies.push(newReply);
+    comment.replies.unshift(newReply);
   }
 
   // 更新扁平化列表
-  flatComments.push({ ...newReply });
+  flatComments.unshift({ ...newReply });
 
   // 清空输入框
   replyContent.value = "";
@@ -481,11 +539,14 @@ defineExpose({
         padding: 10px;
         background: #f8f9fa;
         border-radius: 6px;
-
+        font-size: 24px;
         .reply-input {
           display: flex;
           align-items: center;
           gap: 10px;
+          ::v-deep .el-avatar {
+            font-size: 24px;
+          }
           .reply-textarea {
             font-size: 14px;
             flex: 1;

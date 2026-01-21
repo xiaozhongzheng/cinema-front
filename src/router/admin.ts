@@ -8,25 +8,23 @@ export const adminRoutes = {
   redirect: '/admin/home',
   children: [
     {
-      path: '/admin/home',
+      path: 'home',
       component: () => import('@/views/admin/home/index.vue'),
       meta: {
-        // 路由元信息 用于存储数据的
-        title: '个人中心', // 标题
-        icon: 'HomeFilled' // 图标
+        title: '个人中心',
+        icon: 'HomeFilled'
       }
     },
     {
-      path: '/admin/users',
+      path: 'users',
       component: () => import('@/views/admin/users/index.vue'),
       meta: {
-        // 路由元信息 用于存储数据的
-        title: '用户管理', // 标题已改为用户管理（管理员可管理系统用户）
-        icon: 'UserFilled' // 图标
+        title: '用户管理',
+        icon: 'UserFilled'
       }
     },
     {
-      path: '/admin/cinema',
+      path: 'cinema',
       component: () => import('@/views/admin/cinema'),
       meta: {
         title: '影院管理',
@@ -34,57 +32,44 @@ export const adminRoutes = {
       }
     },
     {
-      path: '/admin/screen',
+      path: 'screen',
       component: () => import('@/views/admin/screen'),
       meta: {
-        // 路由元信息 用于存储数据的
-        title: '放映厅管理', // 标题
-        icon: 'Box' // 图标
+        title: '放映厅管理',
+        icon: 'Box'
       }
     },
     {
-      path: '/admin/film',
+      path: 'film',
       component: () => import('@/views/admin/film'),
       meta: {
-        // 路由元信息 用于存储数据的
-        title: '影片管理', // 标题
-        icon: 'Film' // 图标
+        title: '影片管理',
+        icon: 'Film'
       }
     },
     {
-      path: '/admin/shcedule',
+      path: 'schedule',
       component: () => import('@/views/admin/schedule'),
       meta: {
-        // 路由元信息 用于存储数据的
-        title: '排片管理', // 标题
-        icon: 'Aim' // 图标
+        title: '排片管理',
+        icon: 'Aim'
       }
     },
     {
-      path: '/admin/cinema-carousel',
+      path: 'cinema-carousel',
       component: () => import('@/views/admin/cinema-carousel'),
       meta: {
-        // 路由元信息 用于存储数据的
-        title: '影片轮播图管理', // 标题
-        icon: 'Menu' // 图标
+        title: '影片轮播图管理',
+        icon: 'Menu'
       }
     },
-    // { cinema-carousel
-    //   path: '/admin/addFilm',
-    //   name: 'addFilm',
-    //   component: () => import('@/views/admin/film/AddFilm.vue'),
-    //   hidden: true
-    // },
     {
-      path: '/admin/orders/show',
+      path: 'orders',
       component: () => import('@/views/admin/orders/OrdersView.vue'),
       meta: {
-        // 路由元信息 用于存储数据的
-        title: '查看所有订单', // 标题
-        icon: 'List' // 图标
+        title: '查看所有订单',
+        icon: 'List'
       }
-    },
-
+    }
   ]
 }
-

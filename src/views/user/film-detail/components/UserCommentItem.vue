@@ -47,7 +47,7 @@
         <div
           class="like-btn"
           :class="{ liked: commentItem.liked }"
-          @click="handleLike(commentItem.id)"
+          @click="handleLike(commentItem)"
         >
           <LikedIcon :size="18" :liked="commentItem.liked" />
           <span class="like-count">{{ commentItem.likes || 0 }}</span>
@@ -55,7 +55,7 @@
         <div
           class="like-btn"
           :class="{ liked: commentItem.liked }"
-          @click="handleUnLike(commentItem.id)"
+          @click="handleUnLike(commentItem)"
         >
           <UnLikedIcon :size="18" :unliked="commentItem.unLiked" />
           <span class="like-count">{{ commentItem.unLikes || 0 }}</span>
@@ -80,12 +80,12 @@ type PropsType = {
 const props = defineProps<PropsType>();
 const emit = defineEmits(["showReplyInput", "likeOrUnLike"]);
 
-const handleLike = (commentId: number) => {
-  emit("likeOrUnLike", commentId,ReactionEnum.Like);
+const handleLike = (commentItem: CommentItemType) => {
+  emit("likeOrUnLike", commentItem,ReactionEnum.Like);
 };
 
-const handleUnLike = (commentId: number) => {
-  emit("likeOrUnLike", commentId,ReactionEnum.UnLike);
+const handleUnLike = (commentItem: CommentItemType) => {
+  emit("likeOrUnLike", commentItem,ReactionEnum.UnLike);
 };
 
 // 切换回复框

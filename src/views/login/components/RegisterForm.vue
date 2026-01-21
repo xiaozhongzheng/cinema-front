@@ -36,7 +36,6 @@
   </el-form>
   <div class="button-group">
     <el-button type="primary" @click="handleRegister">注册</el-button>
-    <el-button type="info" @click="handleClose">取消</el-button>
   </div>
 </template>
 
@@ -48,12 +47,6 @@ import { register } from "@/api/user";
 
 const router = useRouter();
 const formRef = ref();
-const emit = defineEmits<{
-  (e: "handleClose"): void;
-}>();
-const handleClose = () => {
-  emit("handleClose");
-};
 
 // 响应式数据
 const registerForm = reactive({
@@ -98,16 +91,17 @@ const rules = reactive({
   ],
 });
 
-// 方法
 const handleRegister = async () => {
-  if (!formRef.value) return;
   const valid = await formRef.value.validate();
-  if (valid) {
-    await register({ ...registerForm });
-    ElMessage.success("注册成功");
-    toLogin();
-  }
+  if (!valid) return;
+
+  await register({ ...registerForm });
+  ElMessage.success("注册成功");
+
+  // 注册成功 → 切回登录页
+  router.replace("/login");
 };
+
 
 const toLogin = () => {
   router.push("/login");

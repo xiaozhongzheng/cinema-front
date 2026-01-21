@@ -11,8 +11,7 @@ import { useUserStore } from '@/stores'
 export default{
   methods: {
     toHome(){
-      const s = useUserStore()
-      s.roleId === 0 ? this.$router.push('/user') : this.$router.push('/admin')
+      this.$router.push('/user')
     }
   }
 }

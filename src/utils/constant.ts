@@ -28,10 +28,14 @@ export const shceduleStatusOptions = [
 export const host = 'localhost'
 // const host = '47.96.128.212'
 
+export enum RoleEnum {
+  Admin = 1,
+  User = 0
+}
 
 export const userRoleOptions = [
-  {label: '用户',value: 0},
-  {label: '管理员',value: 1}
+  {label: '用户',value: RoleEnum.User},
+  {label: '管理员',value: RoleEnum.Admin}
 ]
 export const accountStatusOptions = [
       {

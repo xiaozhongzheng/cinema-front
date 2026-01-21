@@ -3,13 +3,7 @@
     <!-- 主布局容器（Flex 容器） -->
     <div class="main-layout">
       <!-- 侧边栏（Flex 项目） -->
-      <aside
-        class="sidebar"
-        :class="{
-          'sidebar-collapsed': isCollapse,
-          'sidebar-hidden': !showSidebar && isMobile,
-        }"
-      >
+      <aside class="sidebar" :class="{ 'sidebar-collapsed': isCollapse }">
         <!-- 折叠按钮 -->
         <div class="collapse-trigger" @click="toggleCollapse">
           <el-icon>
@@ -38,38 +32,44 @@
 
       <!-- 主内容区（Flex 项目，占剩余空间） -->
       <div class="main-content">
-        <!-- 头部导航（Flex 容器） -->
+        <!-- 头部导航 -->
         <header class="header">
           <div class="header-inner">
-            <!-- 移动端菜单按钮 -->
-            <el-button
-              :icon="Menu"
-              class="mobile-menu-btn"
-              @click="showSidebar = !showSidebar"
-              v-if="isMobile"
-            />
-            <div class="metaNameClass">{{ metaName }}</div>
+            <!-- 系统信息 -->
+            <div class="system-info">
+              <el-avatar shape="square" :size="40" fit="fill" :src="logoUrl" />
+              <span class="system-name">影院管理系统</span>
+            </div>
 
-            <!-- 系统信息（Flex 项目） -->
-            <!-- <div class="system-info">
-              <el-avatar shape="square" :size="50" fit="fill" :src="logoUrl" />
-              <span class="system-name"> 影院管理系统</span>
-            </div> -->
+            <!-- 当前页面标题 -->
+            <div class="page-title">{{ metaName }}</div>
 
-            <!-- 用户操作区（Flex 项目，靠右） -->
+            <!-- 用户操作区 -->
             <div class="user-actions">
               <el-dropdown @command="handleCommand">
-                <span class="user-name">
-                  {{ username }}
-                  <el-icon><ArrowDown /></el-icon>
+                <span class="user-info">
+                  <el-avatar :size="36" :src="userAvatar" class="user-avatar" />
+                  <div class="user-details">
+                    <div class="user-name">{{ username }}</div>
+                    <div class="user-role">{{ userRole }}</div>
+                  </div>
+                  <el-icon class="dropdown-arrow"><ArrowDown /></el-icon>
                 </span>
                 <template #dropdown>
                   <el-dropdown-menu>
                     <el-dropdown-item command="home_page">
                       <el-icon><User /></el-icon>
-                      <span>个人中心</span>
+                      <span>去首页</span>
                     </el-dropdown-item>
-                    <el-dropdown-item command="out" divided>
+                    <el-dropdown-item command="settings">
+                      <el-icon><Setting /></el-icon>
+                      <span>账户设置</span>
+                    </el-dropdown-item>
+                    <el-dropdown-item command="change_password">
+                      <el-icon><Key /></el-icon>
+                      <span>修改密码</span>
+                    </el-dropdown-item>
+                    <el-dropdown-item command="out">
                       <el-icon><SwitchButton /></el-icon>
                       <span>退出登录</span>
                     </el-dropdown-item>
@@ -88,34 +88,31 @@
     </div>
 
     <!-- 个人中心弹窗 -->
-    <MyCenterDialog v-model="showDialog" />
+    <MyCenterDialog v-model="showCenterDialog" />
+
+    <!-- 修改密码弹窗
+    <ChangePasswordDialog v-model="showPasswordDialog" /> -->
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   Fold,
   Expand,
-  Menu,
   ArrowDown,
   User,
+  Setting,
+  Key,
   SwitchButton,
 } from "@element-plus/icons-vue";
 import MyCenterDialog from "./components/MyCenterDialog.vue";
+// import ChangePasswordDialog from "./components/ChangePasswordDialog.vue";
 import SideBarItem from "./components/SideBarItem.vue";
 import { useUserStore } from "@/stores";
 import { adminSystemTitle } from "@/utils/constant";
-
-// 类型定义
-interface RouteRecord {
-  path: string;
-  name?: string;
-  meta?: any;
-  children?: RouteRecord[];
-}
 
 // 组合式 API
 const route = useRoute();
@@ -124,125 +121,111 @@ const userStore = useUserStore();
 
 // 响应式数据
 const currentPath = ref<string>(route.path);
-const showDialog = ref<boolean>(false);
+const showCenterDialog = ref<boolean>(false);
+const showPasswordDialog = ref<boolean>(false);
 const isCollapse = ref<boolean>(false);
-const showSidebar = ref<boolean>(true);
-const screenWidth = ref<number>(window.innerWidth);
-const mobileBreakpoint = 768;
 
-// 计算属性
-const routes = computed((): any => {
-  return router.options.routes;
+// 计算属性：过滤掉 hidden 路由
+const routes = computed(() => {
+  return router.options.routes.filter((r: any) => !r.hidden);
 });
+
+// 计算属性：当前页面标题（支持嵌套路由）
 const metaName = computed(() => {
-  const { children = [] } = routes.value[5];
-  const { meta = {} } = children.find(
-    (item: any) => item.path === currentPath.value
-  );
-  return meta.title || "";
+  const findRoute = (routesList: any[]): any => {
+    for (const r of routesList) {
+      if (r.path === currentPath.value) return r.meta;
+      if (r.children) {
+        const child = findRoute(r.children);
+        if (child) return child;
+      }
+    }
+    return null;
+  };
+  const meta = findRoute(routes.value);
+  return meta?.title || "";
 });
 
-console.log(routes.value[5], "routes");
-
-const isMobile = computed((): boolean => {
-  return screenWidth.value < mobileBreakpoint;
-});
-
+// 计算属性：用户信息
 const username = computed((): string => {
-  return userStore.userInfo?.username || "";
+  return userStore.userInfo?.username || "管理员";
+});
+
+const userRole = computed((): string => {
+  return userStore.userInfo?.role === "SUPER_ADMIN" ? "超级管理员" : "管理员";
+});
+
+const userAvatar = computed((): string => {
+  return (
+    userStore.userInfo?.avatar ||
+    new URL("@/assets/images/avatar-default.png", import.meta.url).href
+  );
 });
 
 const logoUrl = ref<string>(
-  new URL("@/assets/images/logo.png", import.meta.url).href
+  new URL("@/assets/images/logo.png", import.meta.url).href,
 );
-
 // 监听器
 watch(
   () => route.path,
   (newPath: string) => {
     currentPath.value = newPath;
-  }
+  },
 );
-
-watch(screenWidth, () => {
-  handleResponsive();
-});
 
 // 生命周期
 onMounted(() => {
   document.title = adminSystemTitle;
-  window.addEventListener("resize", handleResize);
-  handleResponsive();
-});
-
-onUnmounted(() => {
-  window.removeEventListener("resize", handleResize);
 });
 
 // 方法
-const handleResize = (): void => {
-  screenWidth.value = window.innerWidth;
-};
-
-const handleResponsive = (): void => {
-  if (isMobile.value) {
-    showSidebar.value = false;
-  } else {
-    showSidebar.value = true;
-    isCollapse.value = false;
-  }
-};
-
 const toggleCollapse = (): void => {
   isCollapse.value = !isCollapse.value;
 };
 
 const logout = async (): Promise<void> => {
-  try {
-    await userStore.logoutAction({
-      // userId: userStore.userId,
-    });
-    ElMessage.success("退出成功");
-    router.push("/login");
-  } catch (error) {
-    ElMessage.error("退出失败");
-  }
+  await userStore.logoutAction(userStore.userInfo);
+  ElMessage.success("退出成功");
+  router.push("/user");
 };
 
 const handleCommand = async (command: string): Promise<void> => {
-  if (command === "out") {
-    try {
-      await ElMessageBox.confirm("确定要退出登录吗？", "提示", {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
-        type: "warning",
-      });
+  switch (command) {
+    case "out":
       await logout();
-    } catch {
-      // 用户取消操作
-    }
-    return;
-  }
+      break;
 
-  if (command === "home_page") {
-    showDialog.value = true;
+    case "home_page":
+      router.push("/user")
+      break;
+
+    case "settings":
+      // 跳转到设置页面
+      router.push("/admin/settings");
+      break;
+
+    case "change_password":
+      showPasswordDialog.value = true;
+      break;
   }
 };
 </script>
 
 <style scoped lang="scss">
 // 变量定义
-$sidebar-width: 200px;
+$sidebar-width: 240px;
 $sidebar-collapsed-width: 64px;
-$header-height: 80px;
-$bg-color: #f4f6f8;
+$header-height: 70px;
+$bg-color: #f5f7fa;
 $sidebar-bg: #545c64;
+$primary-color: #409eff;
 
 // 根容器
 .app-container {
-  width: 100%;
+  width: 100vw;
   height: 100vh;
   overflow: hidden;
+  background: $bg-color;
 }
 
 // 主布局（Flex 容器：横向排列）
@@ -252,14 +235,19 @@ $sidebar-bg: #545c64;
   overflow: hidden;
 }
 
-// 侧边栏（Flex 项目）
+// 侧边栏（固定宽度）
 .sidebar {
   width: $sidebar-width;
   height: 100%;
-  background-color: $sidebar-bg;
+  background: linear-gradient(
+    180deg,
+    $sidebar-bg 0%,
+    darken($sidebar-bg, 5%) 100%
+  );
   transition: all 0.3s ease;
-  flex-shrink: 0; // 不收缩
+  flex-shrink: 0;
   position: relative;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
   z-index: 10;
 
   // 折叠状态
@@ -267,31 +255,31 @@ $sidebar-bg: #545c64;
     width: $sidebar-collapsed-width;
   }
 
-  // 移动端隐藏状态
-  &.sidebar-hidden {
-    width: 0;
-    overflow: hidden;
-  }
-
   // 折叠触发器
   .collapse-trigger {
     position: absolute;
-    top: 10px;
-    right: -10px;
-    width: 20px;
-    height: 20px;
-    background-color: $sidebar-bg;
+    top: 20px;
+    right: -15px;
+    width: 30px;
+    height: 30px;
+    background: $primary-color;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #fff;
     cursor: pointer;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 8px rgba(64, 158, 255, 0.3);
+    transition: all 0.3s;
     z-index: 1;
 
+    &:hover {
+      background: lighten($primary-color, 10%);
+      transform: scale(1.1);
+    }
+
     .el-icon {
-      font-size: 14px;
+      font-size: 16px;
     }
   }
 
@@ -299,95 +287,186 @@ $sidebar-bg: #545c64;
   .sidebar-menu {
     width: 100%;
     height: 100%;
-    padding-top: 40px; // 给折叠按钮留空间
+    padding-top: 60px; // 给折叠按钮留空间
     border: none;
+
+    // &:not(.el-menu--collapse) {
+    //   width: $sidebar-width;
+    // }
   }
 }
 
-// 主内容区（Flex 项目：占满剩余空间）
+// 主内容区（占满剩余空间）
 .main-content {
-  flex: 1; // 占满剩余宽度
+  flex: 1;
   display: flex;
-  flex-direction: column; // 纵向排列（头部 + 内容）
+  flex-direction: column;
   height: 100%;
   overflow: hidden;
+  min-width: 0; // 防止内容溢出
 }
 
-// 头部（Flex 容器：横向排列）
+// 头部区域
 .header {
   height: $header-height;
-  background-color: #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  flex-shrink: 0; // 不收缩
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
 
   .header-inner {
     display: flex;
-    align-items: center; // 垂直居中
-    justify-content: space-between; // 两端对齐
+    align-items: center;
+    justify-content: space-between;
     height: 100%;
-    padding: 0 20px;
+    padding: 0 30px;
   }
 
-  // 移动端菜单按钮
-  .mobile-menu-btn {
-    position: absolute;
-    left: 15px;
-    z-index: 20;
-  }
-  .metaNameClass {
-    font-size: 24px;
-    font-weight: 600;
-  }
-  // 系统信息（Flex 容器：横向排列）
+  // 系统信息
   .system-info {
     display: flex;
     align-items: center;
-    margin-left: 50%; // 给移动端按钮留空间
+    gap: 12px;
 
     .system-name {
       font-size: 20px;
       font-weight: 600;
-      margin-left: 10px;
-
-      @media (max-width: 768px) {
-        font-size: 14px;
-      }
+      color: #333;
+      white-space: nowrap;
     }
+  }
+
+  // 页面标题
+  .page-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #303133;
+    flex: 1;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 20px;
   }
 
   // 用户操作区
   .user-actions {
-    .user-name {
+    .user-info {
       display: flex;
       align-items: center;
-      gap: 4px;
-      font-size: 16px;
+      gap: 12px;
+      padding: 8px 12px;
+      border-radius: 8px;
       cursor: pointer;
+      transition: all 0.3s;
+
+      &:hover {
+        background: #f5f7fa;
+
+        .user-name {
+          color: $primary-color;
+        }
+
+        .dropdown-arrow {
+          transform: rotate(180deg);
+        }
+      }
+
+      .user-avatar {
+        border: 2px solid #e6e6e6;
+      }
+
+      .user-details {
+        display: flex;
+        flex-direction: column;
+
+        .user-name {
+          font-size: 14px;
+          font-weight: 600;
+          color: #303133;
+          transition: color 0.3s;
+        }
+
+        .user-role {
+          font-size: 12px;
+          color: #909399;
+          margin-top: 2px;
+        }
+      }
+
+      .dropdown-arrow {
+        color: #c0c4cc;
+        transition: transform 0.3s;
+        margin-left: 4px;
+      }
     }
   }
 }
 
-// 页面内容区（Flex 项目：占满剩余高度）
+// 页面内容区
 .page-content {
-  flex: 1; // 占满剩余高度
-  background-color: $bg-color;
-  padding: 30px;
+  flex: 1;
+  background: $bg-color;
+  padding: 24px;
   overflow-y: auto;
+
+  // 美化滚动条
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+
+    &:hover {
+      background: #a8a8a8;
+    }
+  }
 }
 
-// 响应式调整
-@media (max-width: 768px) {
+// 适配PC端的响应式（最小宽度限制）
+@media (max-width: 1200px) {
   .sidebar {
-    position: absolute; // 移动端侧边栏悬浮
-    height: 100%;
+    width: 200px;
+
+    &.sidebar-collapsed {
+      width: 64px;
+    }
   }
 
-  .main-content {
-    width: 100%;
+  .page-title {
+    font-size: 16px !important;
+  }
+}
+
+@media (max-width: 992px) {
+  .app-container {
+    min-width: 992px; // 设置最小宽度，确保在较小屏幕上也能正常显示
   }
 
-  .system-info {
-    margin-left: 40px !important;
+  .header .header-inner {
+    padding: 0 20px;
   }
+
+  .page-content {
+    padding: 20px;
+  }
+}
+
+// 动画效果
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>
