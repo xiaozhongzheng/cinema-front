@@ -65,7 +65,7 @@
       <div>
         <h3>电影评论</h3>
 
-        <UserCommentModule v-if="isLogin" ref="commentRef" :filmId="filmId" />
+        <UserCommentModule v-if="isLogin" ref="commentRef"  />
         <el-empty
           v-else
           :image-size="200"
@@ -171,7 +171,7 @@ const saveComment = async (values: any) => {
   dialogVisible.value = false;
   ElMessage.success("评价成功");
   getNewFilmInfo(); // 重新加载评论
-  commentRef.value?.getCommentList();
+  // commentRef.value?.getCommentList();
 };
 
 // 跳转到购票页面

@@ -28,7 +28,6 @@ router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
   const token = userStore.token
   const role = userStore.userInfo?.roleId
-  console.log(to.matched, 'to.matched')
   // 需要登录
   if (to.matched.some(r => r.meta.requiresAuth)) {
     if (!token) {

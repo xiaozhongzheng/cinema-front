@@ -9,7 +9,7 @@
         :size="props.avatarSize || 45"
       ></el-avatar>
       <el-avatar v-else :size="props.avatarSize || 45">
-        {{ commentItem.username.charAt(0).toUpperCase() }}
+        {{ commentItem.username?.charAt(0)?.toUpperCase() || '' }}
       </el-avatar>
     </div>
 
@@ -25,7 +25,7 @@
           </span>
         </div>
         <div class="user-meta">
-          <span class="time">{{ commentItem.createdTime }}</span>
+          <span class="time">{{ dayjs(commentItem.createdTime).format('YYYY-MM-DD HH:mm:ss') }}</span>
           <el-rate
             v-if="commentItem.score"
             :model-value="commentItem.score"
@@ -71,6 +71,7 @@ import { ref, reactive } from "vue";
 import LikedIcon from "@/components/icons/LikedIcon.vue";
 import UnLikedIcon from "@/components/icons/UnLikedIcon.vue";
 import { CommentItemType, ReactionEnum } from "@/api/comment/type";
+import dayjs from "dayjs";
 
 type PropsType = {
   commentItem: CommentItemType;

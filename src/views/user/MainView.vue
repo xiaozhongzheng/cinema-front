@@ -128,7 +128,7 @@ onMounted(() => {
   document.title = userSystemTitle;
   indexPath.value = route.path;
   user.value = userStore.userInfo;
-  console.log(userStore.userInfo, "userStore.userInfo;");
+  // console.log(userStore.userInfo, "userStore.userInfo;");
   showView.value = true;
 });
 
