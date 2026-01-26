@@ -50,7 +50,7 @@ export function getScheduleListByDate(screeningDate: string, filmId: number): Pr
 
 export function getFilmAndScheduleById(params: any): Promise<any> {
   return request({
-    url: '/schedule/filmSchedule',
+    url: '/schedule/detail',
     method: 'get',
     params
   })

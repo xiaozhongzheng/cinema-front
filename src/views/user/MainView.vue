@@ -63,6 +63,9 @@
                   <el-dropdown-item command="/user/me/detail" :icon="User">
                     个人详情
                   </el-dropdown-item>
+                  <el-dropdown-item command="switchAccount" :icon="Switch">
+                    切换账号
+                  </el-dropdown-item>
                   <el-dropdown-item command="logout" :icon="Help">
                     退出登录
                   </el-dropdown-item>
@@ -80,7 +83,7 @@
 
       <div class="emptyBox"></div>
       <el-main class="mainContent">
-        <router-view v-if="showView" :titleName="title"></router-view>
+        <router-view />
       </el-main>
     </el-container>
   </div>
@@ -101,6 +104,7 @@ import {
   Help,
   ArrowDown,
   SwitchButton,
+  Switch,
 } from "@element-plus/icons-vue";
 import { userSystemTitle } from "@/utils/constant";
 // 路由和状态管理
@@ -116,36 +120,26 @@ const menuList = ref([
 const activeIndex = ref(0);
 const title = ref("");
 const indexPath = ref("");
-const user = ref({
-  username: "",
-  avatar: "",
-  discount: "",
-});
-const showView = ref(false);
+// const user = ref<any>({
+//   username: "",
+//   avatar: "",
+//   discount: "",
+// });
 
 // 生命周期钩子
 onMounted(() => {
   document.title = userSystemTitle;
   indexPath.value = route.path;
-  user.value = userStore.userInfo;
+  // user.value = userStore.userInfo;
   // console.log(userStore.userInfo, "userStore.userInfo;");
-  showView.value = true;
 });
-
-watch(
-  () => userStore.userInfo,
-  (newVal) => {
-    console.log(newVal, "newVal");
-    user.value = newVal;
-  },
-);
-
+const user = computed(() => userStore.userInfo);
 // 监听
 watch(
-  () => route,
-  (to: any) => {
-    indexPath.value = to.path;
-    document.documentElement.scrollTop = 0; // 使页面回到顶部
+  () => route.path,
+  (path) => {
+    indexPath.value = path;
+    // document.documentElement.scrollTop = 0
   },
   { immediate: true },
 );
@@ -156,19 +150,19 @@ watch(title, () => {
 
 // 方法
 const handleCommand = (command: string) => {
+  if ("switchAccount" === command) {
+    toSwitchAccount();
+    return;
+  }
+
   if (command === "login") {
-    router.push({
-      path: "/login",
-      query: {
-        redirect: route.fullPath, // 当前页面的完整路径
-      },
-    });
-    return
+    toLogin();
+    return;
   }
 
   if (command === "logout") {
     // 用户退出登录
-    logout(userStore.userInfo);
+    toLogout();
     return;
   }
 
@@ -178,8 +172,22 @@ const handleCommand = (command: string) => {
   }
 };
 
-const logout = async (data: any) => {
-  await userStore.logoutAction(data);
+const toSwitchAccount = async () => {
+  await userStore.logoutAction(userStore.userInfo);
+  toLogin()
+};
+
+const toLogin = () => {
+  router.push({
+    path: "/login",
+    query: {
+      redirect: route.fullPath, // 当前页面的完整路径
+    },
+  });
+};
+
+const toLogout = async () => {
+  await userStore.logoutAction(userStore.userInfo);
   // 清空本地存储的数据
   ElMessage.success("退出成功");
   router.push("/user/home");

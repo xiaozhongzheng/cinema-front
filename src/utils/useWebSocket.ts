@@ -4,7 +4,7 @@ import { useUserStore } from "@/stores";
 
 type WSMessageHandler = (msg: any) => void;
 const baseWsUrl = 'ws://localhost:8080'
-export function useWebSocket(path: string, onMessage: WSMessageHandler) {
+export function useWebSocket(path: string, onMessage: WSMessageHandler,params?: Record<string,any>) {
   const userStore = useUserStore();
   const ws = ref<WebSocket | null>(null);
   const connected = ref(false);
@@ -14,8 +14,12 @@ export function useWebSocket(path: string, onMessage: WSMessageHandler) {
       console.warn("WebSocket: token 未找到");
       return;
     }
-
-    ws.value = new WebSocket(`${baseWsUrl}${path}?token=${userStore.token}`);
+    let newUrl = `${baseWsUrl}${path}`
+    if(params){
+      newUrl+=`?${new URLSearchParams(params).toString()}`
+    }
+    console.log(newUrl,'newUrl')
+    ws.value = new WebSocket(`${newUrl}`);
 
     ws.value.onopen = () => {
       connected.value = true;

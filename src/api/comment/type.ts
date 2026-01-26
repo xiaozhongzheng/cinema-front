@@ -23,7 +23,7 @@ export type CommentItemType = {
     unLikes: number;
     unLiked: boolean;
     showAllReplies?: boolean;
-    replies?: CommentItemType[];
+    replies: CommentItemType[];
     showCount: number;      // 当前展示多少条
 };
 

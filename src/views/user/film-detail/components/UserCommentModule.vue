@@ -3,7 +3,7 @@
     <!-- 评论列表 -->
     <div v-if="commentsData.length" class="comment-list">
       <div
-        v-for="comment in commentsData"
+        v-for="comment in sortedComments(commentsData)"
         :key="comment.id"
         class="comment-item"
       >
@@ -16,7 +16,7 @@
         />
 
         <!-- 回复列表 -->
-        <div v-if="comment.replies?.length" class="comment-row-2">
+        <div v-if="comment.replies.length" class="comment-row-2">
           <div class="replies-container">
             <div class="replies-header" @click="toggleReplies(comment)">
               <span class="replies-count">
@@ -32,14 +32,14 @@
 
             <div class="replies-content">
               <!-- 折叠 -->
-              <div v-if="!comment.showAllReplies" class="view-more">
-                展开 {{ comment.replies.length }} 条回复
+              <div v-if="!comment.showAllReplies" class="view-more" @click="comment.showAllReplies = true">
+                展开回复
               </div>
 
               <!-- 展开 -->
               <div v-else class="replies-expanded">
                 <UserCommentItem
-                  v-for="reply in comment.replies.slice(0, comment.showCount)"
+                  v-for="reply in sortedComments(comment.replies).slice(0, comment.showCount)"
                   :key="reply.id"
                   :commentItem="reply"
                   :avatarSize="30"
@@ -52,7 +52,7 @@
                   v-if="comment.showCount < comment.replies.length"
                   type="primary"
                   link
-                  @click="comment.showCount! += 3"
+                  @click="comment.showCount += 3"
                 >
                   展开更多回复
                 </el-button>
@@ -105,7 +105,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted, onUnmounted } from "vue";
+import { ref, reactive, onMounted, onUnmounted } from "vue";
 import { ArrowDown, ArrowUp } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import UserCommentItem from "./UserCommentItem.vue";
@@ -123,22 +123,22 @@ import { useRoute } from "vue-router";
 
 /* store */
 const userStore = useUserStore();
+const route = useRoute();
+const curFilmId = ref(Number(route.params.filmId));
 
-/* 数据源（唯一） */
-const flatComments = reactive<CommentItemType[]>([]);
+/* 评论树（reactive 管理） */
+const commentsData = reactive<CommentItemType[]>([]);
 
 /* 回复状态 */
 const activeReplyTargetId = ref<number | null>(null);
 const replyContent = ref("");
 const replyUsername = ref("");
-const route = useRoute();
 
-/* WebSocket */
+// WebSocket 消息处理
 const handleWsMessage = (msg: any) => {
   const { type, data } = msg;
-  console.log("接收到后端的消息：",msg)
-  
-  if(type === CommentWsEnum.FirstComment) handleFirstComment(data)
+
+  if (type === CommentWsEnum.FirstComment) handleFirstComment(data);
   if (type === CommentWsEnum.Reply) handleReplyMsg(data);
   if (type === CommentWsEnum.CommentLike) handleLikeMsg(data);
 };
@@ -146,10 +146,13 @@ const handleWsMessage = (msg: any) => {
 const { initWebSocket, send, close } = useWebSocket(
   "/ws/comment",
   handleWsMessage,
+  {
+    token: userStore.token
+  }
 );
 
-onMounted(() => {
-  getCommentList();
+onMounted(async () => {
+  await getCommentList(curFilmId.value);
   initWebSocket();
 });
 
@@ -157,77 +160,69 @@ onUnmounted(() => {
   close?.();
 });
 
-const filmId = computed(() => Number(route.params.filmId));
-console.log(filmId.value,'filmId.value')
-
-const handleFirstComment = (comment: CommentItemType) => {
-  console.log(comment,'handleFirstComment data')
-  console.log(comment.filmId,filmId.value,'===id')
-  if(comment.filmId !== filmId.value) return 
-  flatComments.unshift(comment)
-  console.log(flatComments,'handleFirstComment flatComments')
-
-}
-
-/* 获取评论 */
-const getCommentList = async () => {
-  const res = await getCommentByFilmIdApi(filmId.value);
-  res.forEach(initCommentUIState);
-  flatComments.splice(0, flatComments.length, ...res);
+// 按时间倒序排列
+const sortedComments = (data: CommentItemType[]) => {
+  return [...data].sort(
+    (a, b) => new Date(b.createdTime).getTime() - new Date(a.createdTime).getTime()
+  );
 };
 
-/* 初始化 UI 状态 */
+// 初始化 UI 状态
 const initCommentUIState = (c: CommentItemType) => {
-  c.replies = [];
-  c.showAllReplies = false;
-  c.showCount = 3;
+  return {
+    ...c,
+    replies: c.replies || [],
+    showAllReplies: false,
+    showCount: 3,
+  };
 };
 
-/* 评论树（不复制对象）flatComments和commentsData里的对象指向同一地址 */
-const commentsData = computed(() => {
-  const map = new Map<number, CommentItemType>();
-  const roots: CommentItemType[] = [];
-  console.log(flatComments,'commentsData flatComments')
-  flatComments.forEach((c) => {
-    c.replies = [];
-    map.set(c.id, c);
-  });
+// 获取评论列表
+const getCommentList = async (filmId: number) => {
+  // 注意：这里获取的后端数据一定要按创建时间升序排序，这样能保证一级评论先在commentsData中
+  const res = await getCommentByFilmIdApi(filmId);
+  commentsData.length = 0;
 
-  flatComments.forEach((c) => {
-    if (c.parentId === -1) {
-      roots.push(c);
+  res.forEach((c: CommentItemType) => {
+    const comment = initCommentUIState(c);
+    if (comment.parentId === -1) {
+      commentsData.push(comment);
     } else {
-      map.get(c.parentId)?.replies!.push(c);
+      const parent = commentsData.find(p => p.id === comment.parentId);
+      parent?.replies?.push(comment);
     }
   });
-  // console.log(roots,'roots')
-  return roots;
-});
-
-const isShowReplyInput = (comment: CommentItemType) => {
-  if(activeReplyTargetId.value === null) return false
-  if(comment.id === activeReplyTargetId.value) return true
-  const ids = comment.replies?.map(item => item.id)
-  return ids?.includes(activeReplyTargetId.value)
-}
- 
-const handleReplyMsg = (reply: CommentItemType) => {
-  if(reply.filmId !== filmId.value) return 
-
-  if (flatComments.some((c) => c.id === reply.id)) return;
-
-  initCommentUIState(reply);
-  flatComments.unshift(reply);
-
-  const parent = flatComments.find((c) => c.id === reply.parentId);
-  // 如果是当前用户的评论，则展开评论消息
-  if (parent && reply.userId === userStore.userId) parent.showAllReplies = true;
 };
 
-/* 点赞 */
+// 新增一级评论
+const handleFirstComment = (comment: CommentItemType) => {
+  if (comment.filmId !== curFilmId.value) return;
+  const newComment = initCommentUIState(comment);
+  commentsData.unshift(newComment);
+};
+
+// 新增回复
+const handleReplyMsg = (reply: CommentItemType) => {
+  if (reply.filmId !== curFilmId.value) return;
+
+  // 避免重复
+  const exist = commentsData.some(c => c.id === reply.id || c.replies.some(r => r.id === reply.id));
+  if (exist) return;
+
+  const newReply = initCommentUIState(reply);
+  const parent = commentsData.find(c => c.id === reply.parentId);
+  if (parent) {
+    parent.replies.push(newReply);
+
+    // 当前用户评论则展开
+    if (reply.userId === userStore.userId) parent.showAllReplies = true;
+  }
+};
+
+// 点赞消息
 const handleLikeMsg = (data: CommentReactionResType) => {
-  console.log(data,'handleLikeMsg data')
-  const item = flatComments.find((c) => c.id === data.commentId);
+  const allComments = commentsData.flatMap(c => [c, ...c.replies]);
+  const item = allComments.find(c => c.id === data.commentId);
   if (!item) return;
 
   item.likes = data.likes;
@@ -242,6 +237,7 @@ const handleLikeMsg = (data: CommentReactionResType) => {
 /* UI 行为 */
 const toggleReplies = (comment: CommentItemType) => {
   comment.showAllReplies = !comment.showAllReplies;
+  comment.showCount = 3;
 };
 
 const showReplyText = (commentId: number) => {
@@ -255,14 +251,12 @@ const cancelReply = () => {
 };
 
 const getUsernameByCommentId = (id: number) => {
-  return flatComments.find((c) => c.id === id)?.username || "";
+  const allComments = commentsData.flatMap(c => [c, ...c.replies]);
+  return allComments.find(c => c.id === id)?.username || "";
 };
 
-/* 点赞操作 */
-const handleLikeOrUnLike = (
-  comment: CommentItemType,
-  reactionType: ReactionEnum,
-) => {
+// 点赞操作
+const handleLikeOrUnLike = (comment: CommentItemType, reactionType: ReactionEnum) => {
   send({
     type: CommentWsEnum.CommentLike,
     data: {
@@ -273,7 +267,7 @@ const handleLikeOrUnLike = (
   });
 };
 
-/* 提交回复 */
+// 提交回复
 const submitReply = (parentId: number) => {
   if (!replyContent.value.trim()) {
     return ElMessage.warning("回复内容不能为空");
@@ -283,7 +277,7 @@ const submitReply = (parentId: number) => {
     type: CommentWsEnum.Reply,
     data: {
       userId: userStore.userId,
-      filmId: filmId.value,
+      filmId: curFilmId.value,
       parentId,
       replyId: activeReplyTargetId.value,
       content: replyContent.value,
@@ -295,8 +289,12 @@ const submitReply = (parentId: number) => {
   activeReplyTargetId.value = null;
 };
 
-/* 暴露 */
-defineExpose({ getCommentList });
+// 是否显示回复框
+const isShowReplyInput = (comment: CommentItemType) => {
+  if (activeReplyTargetId.value === null) return false;
+  if (comment.id === activeReplyTargetId.value) return true;
+  return comment.replies.some(r => r.id === activeReplyTargetId.value);
+};
 </script>
 
 <style scoped lang="scss">
