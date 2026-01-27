@@ -44,7 +44,7 @@
             <el-button
               type="info"
               class="btn detail-btn"
-              icon="el-icon-s-help"
+              :icon="Reading"
               @click="toFilmDetail"
             >
               查看影片详情
@@ -54,7 +54,7 @@
               class="btn score-btn"
               v-if="film.status === 2"
               @click="dialogVisible = true"
-              icon="el-icon-star-on"
+              :icon="Star"
             >
               评分
             </el-button>
@@ -121,7 +121,7 @@
       </el-breadcrumb>
 
       <div class="schedule-date-wrapper" v-if="screeningDateList.length">
-        <span class="schedule-label">排片列表：</span>
+        <span class="schedule-label">排片列表</span>
         <el-menu
           :default-active="activeIndex"
           class="date-menu"
@@ -161,7 +161,7 @@
             width="180"
           ></el-table-column>
           <el-table-column prop="type" label="放映类型">
-            <template #default="scope"> {{ scope.row.type }}D </template>
+            <template #default="scope"> {{ getLabelByValue(screenTypeOptions,scope.row.screeningType) }} </template>
           </el-table-column>
           <el-table-column
             prop="screenRoomName"
@@ -202,6 +202,8 @@ import { ElMessage } from "element-plus";
 import { getScheduleDateList, getScheduleListByDate } from "@/api/schedule";
 import { getFilmById } from "@/api/film";
 import { addCommentApi } from "@/api/comment";
+import { Postcard, Reading, Star } from "@element-plus/icons-vue";
+import { getLabelByValue, screenTypeOptions } from "@/utils/constant";
 
 // ========== 类型定义 ==========
 // 电影信息类型
@@ -558,8 +560,6 @@ onMounted(async () => {
       margin-top: 20px;
 
       .btn {
-        width: 140px;
-        border-radius: 4px;
       }
     }
   }

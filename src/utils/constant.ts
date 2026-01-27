@@ -50,5 +50,10 @@ export const accountStatusOptions = [
 export const rolePathList = ['/user', '/admin']
 export const payStatus = ['已取消', '已支付', '已完成']
 
+export const getLabelByValue = (options: {label: string,value: any}[],value: any) => {
+  const item = options.find(item => item.value === value)
+  return item?.label
+}
+
 
 

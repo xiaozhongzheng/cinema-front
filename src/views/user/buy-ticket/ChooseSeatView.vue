@@ -1,458 +1,733 @@
 <template>
-  <div
-    id="seat"
-    style="text-align: left;"
-  >
-    <el-steps
-      :active="2"
-      style="margin: auto;width: 80%;margin-top: 30px;"
-    >
-      <el-step
-        title="步骤 1"
-        description="选择电影场次"
-      ></el-step>
-      <el-step
-        title="步骤 2"
-        description="选择座位号"
-      ></el-step>
-      <el-step
-        title="步骤 3"
-        description="加入购物车并在15分钟内付款"
-      ></el-step>
-      <el-step
-        title="步骤 4"
-        description="结算付款"
-      ></el-step>
+  <div id="seat">
+    <!-- 步骤条 -->
+    <el-steps :active="2" align-center class="steps">
+      <el-step title="选择场次" description="选择电影和放映时间" />
+      <el-step title="选择座位" description="挑选心仪的座位" />
+      <el-step title="确认订单" description="加入购物车并在15分钟内付款" />
+      <el-step title="完成支付" description="支付成功，购票完成" />
     </el-steps>
 
-    <div class="left">
-      <div style="width: 100%;">
-        <img
-          :src="filmSchedule.poster"
-          width="150px"
-          style="float: left;"
-        >
-        <div style="width: 55%;float: left;padding-left: 20px;">
-          <h2>{{ filmSchedule.title }}</h2>
-          <p>
-            <span>类型：</span>{{ typeArr[filmSchedule.filmType] }}
-          </p>
-          <p>
-            <span>地区：</span>{{ regionArr[filmSchedule.region] }}
-          </p>
-          <p>
-            <span>时长：</span>{{ filmSchedule.duration }} 分钟
-          </p>
-          <p>
-            <span>放映：</span>{{ filmSchedule.scheduleType }}D 放映
-          </p>
+    <div class="seat-container">
+      <!-- 左侧信息 -->
+      <div class="left-panel">
+        <div class="film-card">
+          <img :src="filmSchedule.poster" class="film-poster" />
+          <div class="film-detail">
+            <h2 class="film-title">{{ filmSchedule.title }}</h2>
+            <div class="film-meta">
+              <span class="meta-item">类型：{{ filmSchedule.filmTypes }}</span>
+              <span class="meta-item"
+                >地区：{{ filmSchedule.filmRegions }}</span
+              >
+              <span class="meta-item"
+                >时长：{{ filmSchedule.duration }} 分钟</span
+              >
+              <span class="meta-item"
+                >{{
+                  getLabelByValue(screenTypeOptions, filmSchedule.scheduleType)
+                }}
+                放映</span
+              >
+            </div>
+          </div>
         </div>
+
+        <div class="schedule-info">
+          <div class="info-item">
+            <span class="label">开场时间：</span>
+            <span class="value highlight">{{ filmSchedule.startTime }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">散场时间：</span>
+            <span class="value">{{ filmSchedule.endTime }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">单座票价：</span>
+            <span class="value">￥{{ filmSchedule.price }}/张</span>
+          </div>
+        </div>
+
+        <div class="selected-seats">
+          <span class="title">已选座位：</span>
+          <div class="tag-group">
+            <div
+              v-for="seat in seatNumbers"
+              :key="seat"
+              type="success"
+              class="seat-tag"
+              size="small"
+            >
+              {{ seat }}号
+            </div>
+            <span v-if="!seatNumbers.length" class="empty-tip"
+              >暂未选择座位</span
+            >
+          </div>
+        </div>
+
+        <div class="total-price">
+          <span class="label">总计金额：</span>
+          <span class="price">￥{{ countPrice }}</span>
+        </div>
+
+        <el-input
+          v-model="phone"
+          placeholder="请输入11位手机号"
+          class="phone-input"
+          clearable
+          maxlength="11"
+          show-word-limit
+        />
+        <el-button
+          type="danger"
+          class="add-cart-btn"
+          @click="saveCart"
+          size="large"
+        >
+          加入购物车
+        </el-button>
       </div>
 
-      <p style="color: red">
-        <span>开场：</span>
-        {{ filmSchedule.startTime }}
-      </p>
-      <p>
-        <span>散场：</span>{{ filmSchedule.endTime }}
-      </p>
-      <p>
-        <span>票价：</span>￥{{ filmSchedule.price }}/张
-      </p>
-      <hr>
-      <p>
-        <span style="color: black">已选座位：</span>
-        <el-tag
-          type="success"
-          style="color: red;width: 50px;margin-left: 10px;margin-top: 10px"
-          v-for="item in seatNumberArr"
-        >
-          {{ item }}号
-        </el-tag>
-      </p>
-      <p style="color: red;font-size: 24px">
-        <span style="color: black;font-size: 14px">总计：</span>￥{{ countPrice }}
-      </p>
-      <hr>
-      <el-input
-        v-model="phone"
-        autocomplete="off"
-        placeholder="请输入手机号"
-        style="width: 200px;margin: 10px 0"
-      ></el-input>
-      <br>
-      <el-button
-        type="danger"
-        @click="saveCart()"
-        style="width: 200px;margin-right: 20px;border-radius: 40px;"
-      >
-        加入购物车
-      </el-button>
+      <!-- 右侧座位 -->
+      <div class="right-panel">
+        <div class="seat-selector">
+          <!-- 图例 -->
+          <div class="legend">
+            <div class="legend-item">
+              <span class="legend-color noSelected"></span>
+              <span class="legend-text">可选</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-color isOtherUserSelected"></span>
+              <span class="legend-text">他人已选</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-color isSelected"></span>
+              <span class="legend-text">您已选</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-color cartSeat"></span>
+              <span class="legend-text">已加购物车</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-color selledSeat"></span>
+              <span class="legend-text">已售出</span>
+            </div>
+          </div>
 
-    </div>
+          <!-- 屏幕 -->
+          <div class="screen-wrapper">
+            <div class="screen"></div>
+            <p class="screen-tip">银幕中央</p>
+          </div>
 
-    <div
-      class="right"
-      style="text-align: center;"
-    >
-      <div style="width: 90%;margin: auto">
-        <div style="height: 60px;line-height: 60px;">
-          <span style="display: inline-block;width: 35px;height: 35px;
-              line-height: 35px;text-align: center;
-              background-color:white;vertical-align: middle;">
-          </span>
-          可选
-          <span style="display: inline-block;width: 35px;height: 35px;
-              background: orange;line-height: 35px;text-align: center;
-              vertical-align: middle;margin-left: 20px;">
-          </span>
-          其他用户已选
-          <span style="display: inline-block;width: 35px;height: 35px;
-              background: green;line-height: 35px;text-align: center;
-              vertical-align: middle;margin-left: 20px;">
-          </span>
-          当前用户已选
-          <span class="common cartSeat">
-          </span>
-          已加入购物车
-          <span class="common selledSeat">
-          </span>
-          已售
-        </div>
-        <div style="width: 100%;height: 30px;">
-          <img
-            :src="require('@/assets/images/screen.png')"
-            width="100%"
-          >
-        </div>
-        <p style="margin-top: 30px">银幕中央</p>
-
-        <el-row style="margin-top: 50px;margin-left: 40px">
-          <el-col
-            v-for="(row, rowIndex) in seats"
-            :key="rowIndex"
-          >
-            <el-col
-              v-for="(seat, seatIndex) in row"
-              :key="seatIndex"
-              style="width: 60px;float: left;margin-bottom: 20px;"
+          <!-- 座位表 -->
+          <div class="seats-wrapper">
+            <div
+              v-for="(row, rowIndex) in seatDatas"
+              :key="row[0].number"
+              class="seat-row"
             >
               <span
-                v-if="seat.status===3"
-                @click="$message.error('不能选择已售座位')"
-                class="common selledSeat"
+                v-for="(seat, seatIndex) in row"
+                :key="seat.number"
+                :class="getSeatClass(seat)"
+                @click="handleSeatClick(rowIndex, seatIndex, seat)"
+                class="seat-item"
               >
                 {{ seat.number }}
               </span>
-              <span
-                v-else-if="seat.status===2 && seat.isCurrentUser === 1"
-                @click="$message.error('不能选择已加入购物车的座位')"
-                class="common cartSeat"
-              >
-                {{ seat.number }}
-              </span>
-              <span
-                v-else-if="seat.status===1 && seat.isCurrentUser === 1"
-                @click="cancelSeat(rowIndex,seatIndex)"
-                class="common isSelected"
-              >
-                {{ seat.number }}
-              </span>
-
-              <span
-                v-else-if="(seat.status===1 || seat.status===2) && seat.isCurrentUser === 0"
-                @click="$message.error('不能选择其他用户已选择的座位')"
-                class="common isOtherUserSelected"
-              >
-                {{ seat.number }}
-              </span>
-
-              <span
-                v-else-if="seat.status === 0"
-                @click="selectSeat(rowIndex, seatIndex)"
-                class="common noSelected"
-              >
-
-                {{ seat.number }}
-
-              </span>
-
-              <!-- <span
-                v-if="seat.selected"
-                @click="cancelSelectSeat(rowIndex, seatIndex)"
-                class="common isSelected"
-              >
-
-                {{ seat.number }}
-
-              </span> -->
-
-            </el-col>
-          </el-col>
-        </el-row>
-
+            </div>
+          </div>
+        </div>
       </div>
-
     </div>
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, reactive, onMounted, onUnmounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { ElMessage } from "element-plus";
+import { useUserStore } from "@/stores";
+
 import { getFilmAndScheduleById } from "@/api/schedule";
 import { getSeatsByScheduleId, deleteSeatById } from "@/api/seat";
 import { addCart } from "@/api/cart";
-export default {
-  data() {
-    return {
-      id: "", // 排片的id
-      userId: "",
-      filmSchedule: {
-        // filmId: 3,
-        // scheduleId: 2,
-        // title: "荒野机器人",
-        // poster: require("E:\\img\\电影管理系统图片\\2.jpg"),
-        // filmType: 0,
-        // region: 0,
-        // duration: 120,
-        // scheduleType: 2,
-        // startTime: "2024-09-24 08:00:00",
-        // endTime: "2024-09-24 10:00:00",
-        // price: 33,
-        // seatCount: 40, // 座位数
-      },
-      typeArr: this.$constant.filmTypeArr,
-      regionArr: this.$constant.regionArr,
-      countPrice: 0, // 总价
-      seats: [[]], // 存放初始化时的座位数组
-      seatNumberArr: [], // 存放当前用户已选的座位信息
-      phone: "",
-      path: "ws://106.52.252.158:8080/chooseSeat",
-      // path: "ws://localhost:8888/chooseSeat",
-      seatArr: [], // 存放的是服务器传递过来的座位信息
-    };
-  },
-  created() {
-    this.id = this.$route.query.id; // 获取排片的id
-    this.userId = useUserStore().userId; // 获取用户的id
-    this.path += `/${this.id}`; // 用于将排片id传到服务器端
-    this.init(); // 初始化影片排片信息和座位数
-  },
-  watch: {
-    phone(newVal,oldVal){
-      console.log(newVal,oldVal)
-    }
-  },
-  methods: {
-    initSeats() {
-      let j = 0,
-        i = 0;
-      let a = [];
-      a[0] = new Array();
-      for (let k = 1; k <= this.filmSchedule.seatCount; k++) {
-        let seat = {
-          number: k,
-          status: 0, // 0表示座位未选中,1表示已选中，2表示已售卖
-          isCurrentUser: 0, // 1表示是当前用户，0表示不是当前用户
-        };
+import screenImg from "@/assets/images/screen.png";
+import { useWebSocket } from "@/utils/useWebSocket";
+import { getLabelByValue, screenTypeOptions } from "@/utils/constant";
 
-        a[j][i] = seat;
-        i++;
-        if (k % 12 == 0) {
-          // 12个座位为一行
-          j++;
-          i = 0;
-          a[j] = new Array();
-        }
-      }
-      this.seats = a;
-    },
-    initWebSocket() {
-      // 实例化socket，这里的实例化直接赋值给this.ws是为了后面可以在其它的函数中也能调用websocket方法，例如：this.ws.close(); 完成通信后关闭WebSocket连接
-      this.ws = new WebSocket(this.path);
+// ========== 类型 ==========
+interface SeatType {
+  scheduleId: number;
+  userId: number;
+  number: number;
+  status: number; // 0:未选 1:已选 2:已加入购物车 3:已售
+  isCurrentUser: number; // 1:当前用户选 0:其他用户
+}
 
-      //监听是否连接成功
-      this.ws.onopen = () => {
-        if (this.ws.readyState == 1) {
-          console.log("ws连接成功");
-        }
-        //连接成功则发送一个数据
-      };
-      //接听服务器发回的信息并处理展示
-      this.ws.onmessage = (res) => {
-        this.seatArr = JSON.parse(res.data); // 传递的是字符串对象，需要转换成js对象
-        console.log(`接收到自服务器传递的数据长度:${this.seatArr.length}`);
-        this.initSeats();
-        this.updateSeatStatus();
-      };
-      //监听连接关闭事件
-      this.ws.onclose = () => {
-        //监听整个过程中websocket的状态
-        // console.log("ws连接状态：" + this.ws.readyState);
-      };
+interface FilmSchedule {
+  title: string;
+  poster: string;
+  filmTypes: string;
+  filmRegions: string;
+  duration: number;
+  scheduleType: number;
+  startTime: string;
+  endTime: string;
+  price: number;
+  seatCount: number;
+}
 
-      //监听并处理error事件
-      this.ws.onerror = function (error) {
-        console.log(error);
-      };
-    },
-    sendMessage(data) {
-      // 将数据传递给服务器
-      this.ws.send(data);
-    },
-    updateSeatStatus() {
-      // 更新座位的状态和计算选中的座位
-      this.seats.forEach((arr) => {
-        arr.forEach((item) => {
-          this.seatArr.forEach((seat) => {
-            // 修改座位的状态
-            if (item.number === seat.number) {
-              item.status = seat.status;
-              if (seat.userId == this.userId) {
-                item.isCurrentUser = 1;
-              }
-              return; // 跳出本次循环
-            }
-          });
-        });
-      });
-      // 将选中的座位存入到选中座位数组中
-      this.calculateSeats();
-    },
-    async init() {
-      this.initWebSocket(); // 初始化websocket
-      this.filmSchedule = await getFilmAndScheduleById({
-        scheduleId: this.id,
-      });
-      this.initSeats(); // 初始化座位数
-      this.updateSeatArr();
-    },
-    // 获取用户已选的座位并进行状态更新
-    async updateSeatArr(){
-      this.seatArr = await getSeatsByScheduleId({
-        scheduleId: this.id,
-      });
-      this.updateSeatStatus();
-    },
-    async saveCart() {
-      if (this.seatNumberArr.length == 0) {
-        this.$message.error("请选择座位");
-        return;
-      }
-      if (!this.phone || this.phone.length != 11) {
-        this.$message.error("请输入11位的电话号码");
-        return;
-      }
-      const film = this.filmSchedule;
-      const cart = {
-        scheduleId: this.id,
-        title: film.title,
-        poster: film.poster,
-        price: film.price,
-        seatNumber: this.seatNumberArr,
-        phone: this.phone,
-        startTime: film.startTime,
-      };
-      await addCart(cart);
-      this.$message.success("加入购物车成功");
-      this.updateSeatArr();
-      setTimeout(() => {
-        this.$message.info("请在15分钟内完成付款哦");
-      }, 1000); // 延迟1秒
-    },
-    // 用户选择座位时执行该方法
-    selectSeat(rowIndex, seatIndex) {
-      this.seats[rowIndex][seatIndex].status = 1;
-      const seat = {
-        number: this.seats[rowIndex][seatIndex].number,
-        scheduleId: this.id,
-        status: 1, // 表示座位已选中
-        userId: this.userId,
-      };
-      this.sendMessage(JSON.stringify(seat)); // 传递json格式的字符串
-    },
-    // 用户取消座位时执行该方法
-    async cancelSeat(rowIndex, seatIndex) {
-      this.seats[rowIndex][seatIndex].status = 0;
-      await deleteSeatById({
-        scheduleId: this.id,
-        number: this.seats[rowIndex][seatIndex].number,
-      });
-    },
+// ========== 路由与用户 ==========
+const route = useRoute();
+const router = useRouter();
+const userStore = useUserStore();
 
-    calculateSeats() {
-      let selectingArr = [];
-      this.seats.forEach((arr) => {
-        arr.forEach((item) => {
-          if (item.status == 1 && item.isCurrentUser == 1) {
-            // 当前用户正在选择的座位
-            selectingArr.push(item.number);
-          }
-        });
-      });
-      this.seatNumberArr = selectingArr;
-      // 计算总的价格
-      this.countPrice = selectingArr.length * this.filmSchedule.price;
-    },
-  },
+const scheduleId = ref(route.query.id as string);
+const userId = userStore.userId;
+
+// ========== 响应式 ==========
+const filmSchedule = reactive<FilmSchedule>({
+  title: "",
+  poster: "",
+  filmTypes: "",
+  filmRegions: "",
+  duration: 0,
+  scheduleType: 0,
+  startTime: "",
+  endTime: "",
+  price: 0,
+  seatCount: 0,
+});
+
+const seatDatas = ref<SeatType[][]>([]);
+const seatList = ref<SeatType[]>([]);
+const seatNumbers = ref<number[]>([]);
+const countPrice = ref(0);
+const phone = ref("");
+
+// ========== WebSocket ==========
+const handleWsMessage = (msg: any) => {
+  console.log(msg, "msg");
+  // 服务器推送座位信息
+  seatList.value = msg;
+  initSeats();
+  updateSeatStatus();
 };
+
+const { initWebSocket, send, close } = useWebSocket(
+  `/ws/seat/${scheduleId.value}`,
+  handleWsMessage,
+);
+
+// ========== 方法 ==========
+/** 初始化座位表 */
+const initSeats = () => {
+  const rows: SeatType[][] = [];
+  let row: SeatType[] = [];
+  for (let i = 1; i <= filmSchedule.seatCount; i++) {
+    row.push({
+      number: i,
+      status: 0,
+      isCurrentUser: 0,
+      scheduleId: Number(scheduleId.value),
+      userId: userId,
+    });
+    if (i % 12 === 0) {
+      rows.push(row);
+      row = [];
+    }
+  }
+  if (row.length) rows.push(row);
+  seatDatas.value = rows;
+};
+
+/** 更新座位状态 */
+const updateSeatStatus = () => {
+  seatDatas.value.forEach((row) =>
+    row.forEach((seat) => {
+      const serverSeat = seatList.value.find((s) => s.number === seat.number);
+      if (serverSeat) {
+        seat.status = serverSeat.status;
+        seat.isCurrentUser = serverSeat.userId === userId ? 1 : 0;
+      }
+    }),
+  );
+  calculateSeats();
+};
+
+/** 计算已选座位及总价 */
+const calculateSeats = () => {
+  const selected = seatDatas.value
+    .flat()
+    .filter((seat) => seat.status === 1 && seat.isCurrentUser === 1)
+    .map((s) => s.number);
+  seatNumbers.value = selected;
+  countPrice.value = selected.length * filmSchedule.price;
+};
+
+/** 获取排片信息 */
+const getFilmSchedule = async () => {
+  try {
+    const res = await getFilmAndScheduleById({ scheduleId: scheduleId.value });
+    Object.assign(filmSchedule, res);
+    initSeats();
+    await updateSeatArr();
+  } catch (err) {
+    ElMessage.error("获取电影排片失败");
+    console.error(err);
+  }
+};
+
+/** 获取座位信息 */
+const updateSeatArr = async () => {
+  seatList.value = await getSeatsByScheduleId({ scheduleId: scheduleId.value });
+  updateSeatStatus();
+};
+
+/** 选择/取消座位 */
+const handleSeatClick = async (
+  rowIndex: number,
+  seatIndex: number,
+  seat: SeatType,
+) => {
+  if (seat.status === 3) return ElMessage.error("不能选择已售座位");
+  if (seat.status === 2 && seat.isCurrentUser === 1)
+    return ElMessage.error("不能选择已加入购物车的座位");
+  if ((seat.status === 1 || seat.status === 2) && seat.isCurrentUser === 0)
+    return ElMessage.error("不能选择其他用户已选择的座位");
+
+  if (seat.status === 0) {
+    seat.status = 1;
+    send({
+      number: seat.number,
+      status: 1,
+      userId,
+      scheduleId: scheduleId.value,
+    });
+  } else if (seat.status === 1 && seat.isCurrentUser === 1) {
+    seat.status = 0;
+    await deleteSeatById({ scheduleId: scheduleId.value, number: seat.number });
+  }
+
+  calculateSeats();
+};
+
+/** 加入购物车 */
+const saveCart = async () => {
+  if (!seatNumbers.value.length) return ElMessage.error("请选择座位");
+  if (!phone.value || phone.value.length !== 11)
+    return ElMessage.error("请输入11位手机号");
+
+  try {
+    await addCart({
+      scheduleId: scheduleId.value,
+      title: filmSchedule.title,
+      poster: filmSchedule.poster,
+      price: filmSchedule.price,
+      seatNumbers: seatNumbers.value,
+      phone: phone.value,
+      startTime: filmSchedule.startTime,
+    });
+    ElMessage.success("加入购物车成功，请在15分钟内完成付款");
+    await updateSeatArr();
+  } catch (err) {
+    ElMessage.error("加入购物车失败");
+    console.error(err);
+  }
+};
+
+/** 获取座位样式 */
+const getSeatClass = (seat: SeatType) => {
+  if (seat.status === 3) return "selledSeat"; // 已售
+  if (seat.status === 2 && seat.isCurrentUser === 1) return "cartSeat"; // 当前用户已加购物车
+  if (seat.status === 1 && seat.isCurrentUser === 1) return "isSelected"; // 当前用户已选
+  if ((seat.status === 1 || seat.status === 2) && seat.isCurrentUser === 0)
+    return "isOtherUserSelected"; // 其他用户已选
+  return "noSelected"; // 可选
+};
+
+// ========== 生命周期 ==========
+onMounted(() => {
+  if (!scheduleId.value) {
+    ElMessage.warning("未获取到排片ID");
+    router.push("/user/home");
+    return;
+  }
+  getFilmSchedule();
+  initWebSocket();
+});
+
+onUnmounted(() => {
+  close?.();
+});
 </script>
 
-
-
-<style scoped>
+<style lang="scss" scoped>
 #seat {
-  width: 1400px;
-  height: 100vh;
-  margin: auto;
-  background-color: rgb(234, 238, 243);
-}
-.left {
-  width: 28%;
-  /* height: 600px; */
-  background-color: rgb(250, 248, 251);
-  float: left;
-  margin-left: 3%;
-  padding: 20px;
-}
-.right {
-  width: 65%;
-  height: 600px;
-  float: left;
-}
-.left p span {
-  color: rgb(185, 183, 186);
-}
-/deep/ .el-input__inner {
-  border-radius: 40px;
+  min-width: 1000px;
+  min-height: 100vh;
+  background-color: #f7fafc;
+  padding: 24px 16px;
+  box-sizing: border-box;
+
+  // 步骤条样式优化
+  .steps {
+    max-width: 1200px;
+    margin: 0 auto 32px;
+    padding: 0 16px;
+
+    :deep(.el-steps) {
+      --el-steps-process-text-color: #e53e3e;
+      --el-steps-process-border-color: #e53e3e;
+      --el-steps-process-icon-color: white;
+      --el-steps-process-bg-color: #e53e3e;
+    }
+
+    :deep(.el-step__title) {
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    :deep(.el-step__description) {
+      font-size: 12px;
+      color: #718096;
+      margin-top: 4px;
+    }
+  }
+
+  // 主容器
+  .seat-container {
+    display: flex;
+    gap: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+    align-items: flex-start;
+
+    // 左侧信息面板
+    .left-panel {
+      width: 300px;
+
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      box-sizing: border-box;
+
+      // 电影信息卡片
+      .film-card {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 24px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #edf2f7;
+
+        .film-poster {
+          width: 100px;
+          height: 140px;
+          object-fit: cover;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .film-detail {
+          flex: 1;
+          text-align: left;
+          .film-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d3748;
+            margin: 0 0 12px;
+            line-height: 1.4;
+          }
+
+          .film-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+
+            .meta-item {
+              font-size: 13px;
+              color: #718096;
+              line-height: 1.5;
+            }
+          }
+        }
+      }
+
+      // 排期信息
+      .schedule-info {
+        margin-bottom: 20px;
+
+        .info-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 8px;
+          font-size: 14px;
+
+          .label {
+            color: #718096;
+          }
+
+          .value {
+            color: #2d3748;
+            font-weight: 500;
+
+            &.highlight {
+              color: #e53e3e;
+              // font-weight: 600;
+            }
+          }
+        }
+      }
+
+      // 已选座位
+      .selected-seats {
+        margin-bottom: 20px;
+        padding: 16px;
+        background: #f8fafc; // 极浅的底色区分区域
+        border-radius: 12px; // 更圆润的现代感
+        border: 1px solid #edf2f7;
+
+        .title {
+          display: block;
+          font-size: 14px;
+          color: #2d3748; // 深灰文字增加质感
+          font-weight: 600;
+          margin-bottom: 12px;
+          letter-spacing: 0.02em;
+        }
+
+        .tag-group {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          align-items: center;
+          min-height: 32px;
+
+          .seat-tag {
+            border-radius: 6px;
+            width: 45px;
+            padding: 5px 0;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            // cursor: pointer;
+            background-color: #48bb78 !important;
+            color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(72, 187, 120, 0.2);
+          }
+
+          .empty-tip {
+            font-size: 13px;
+            color: #a0aec0;
+            font-style: normal; // 去除斜体，现代设计较少使用斜体做提示
+            display: flex;
+            align-items: center;
+          }
+        }
+      }
+
+      // 总价
+      .total-price {
+        margin-bottom: 20px;
+        padding: 12px;
+        background-color: #f7fafc;
+        border-radius: 8px;
+
+        .label {
+          font-size: 14px;
+          color: #718096;
+        }
+
+        .price {
+          font-size: 20px;
+          color: #e53e3e;
+          font-weight: 700;
+          margin-left: 8px;
+        }
+      }
+
+      // 手机号输入框
+      .phone-input {
+        width: 100%;
+        margin-bottom: 16px;
+
+        :deep(.el-input__wrapper) {
+          border-radius: 8px;
+          padding: 0 16px;
+          height: 48px;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+          border: 1px solid #edf2f7;
+
+          &:focus-within {
+            border-color: #e53e3e;
+            box-shadow: 0 0 0 2px rgba(229, 62, 62, 0.1);
+          }
+        }
+      }
+
+      // 加入购物车按钮
+      .add-cart-btn {
+        width: 100%;
+        height: 50px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 500;
+        background-color: #e53e3e;
+        border: none;
+
+        &:hover {
+          background-color: #d32f2f;
+        }
+
+        &:disabled {
+          background-color: #cbd5e0;
+          cursor: not-allowed;
+        }
+      }
+    }
+
+    // 右侧选座面板
+    .right-panel {
+      flex: 1;
+      box-sizing: border-box;
+
+      .seat-selector {
+        width: 100%;
+
+        // 图例
+        .legend {
+          display: flex;
+          justify-content: center;
+          flex-wrap: wrap;
+          gap: 20px;
+          margin-bottom: 24px;
+          padding-bottom: 16px;
+          border-bottom: 1px solid #edf2f7;
+
+          .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #4a5568;
+
+            .legend-color {
+              width: 16px;
+              height: 16px;
+              border-radius: 4px;
+              display: inline-block;
+            }
+
+            .legend-text {
+              color: #718096;
+            }
+          }
+        }
+
+        // 屏幕样式
+        .screen-wrapper {
+          text-align: center;
+          margin-bottom: 32px;
+
+          .screen {
+            width: 70%;
+            height: 20px;
+            background: linear-gradient(to right, #e2e8f0, #cbd5e0, #e2e8f0);
+            border-radius: 8px 8px 0 0;
+            margin: 0 auto;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          }
+
+          .screen-tip {
+            margin-top: 8px;
+            font-size: 13px;
+            color: #718096;
+          }
+        }
+
+        // 座位区域
+        .seats-wrapper {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          padding: 0 16px;
+
+          .seat-row {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+
+            .seat-item {
+              width: 38px;
+              height: 38px;
+              line-height: 38px;
+              text-align: center;
+              cursor: pointer;
+              border-radius: 6px;
+              font-size: 15px;
+              font-weight: 500;
+              transition: all 0.2s ease;
+              user-select: none;
+
+              &:hover {
+                transform: scale(1.08);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+              }
+
+              // 禁用hover效果的状态
+              &.selledSeat,
+              &.isOtherUserSelected,
+              &.cartSeat {
+                cursor: not-allowed;
+
+                &:hover {
+                  transform: none;
+                  box-shadow: none;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
-.common {
-  display: inline-block;
-  width: 35px;
-  height: 35px;
-  line-height: 35px;
-  text-align: center;
-  cursor: pointer;
-  vertical-align: middle;
-}
+/* 1. 可选座位：清爽的灰色微凹感 */
 .noSelected {
-  background: #fff;
-  color: rgb(184, 183, 186);
+  background: #ffffff;
+  border: 1px solid #dcdfe6;    
+  color: #909399;
 }
+
+/* 2. 当前用户选中：高亮森林绿 (成功感) */
 .isSelected {
-  background: green;
+  background: #27ae60 !important; /* 加深绿色 */
   color: white;
 }
+
+/* 3. 其他用户选中：深沉的琥珀橙 (警示不可选) */
 .isOtherUserSelected {
-  background: orange;
+  background: #f39c12 !important; /* 提高饱和度 */
   color: white;
 }
+
+/* 4. 已加入购物车：商务深蓝 (待处理感) */
 .cartSeat {
-  background: #409eff;
+  background: skyblue !important; 
   color: white;
 }
+
 .selledSeat {
-  background: red;
+  background: red !important; 
   color: white;
 }
+
 </style>
